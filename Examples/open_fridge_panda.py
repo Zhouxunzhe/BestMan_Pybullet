@@ -46,7 +46,7 @@ def rotate_point_3d_around_axis(init_pose, rotate_axis, theta, clockwise=True):
         rotation_matrix = np.array(
             [[cos_theta, sin_theta, 0], [-sin_theta, cos_theta, 0], [0, 0, 1]]
         )
-        rotated_quaternion = p.getQuaternionFromEuler([0, 0, -theta / 2])
+        rotated_quaternion = p.getQuaternionFromEuler([0, 0, -theta])
         rotated_orientation = p.multiplyTransforms(
             [0, 0, 0],
             rotated_quaternion,
@@ -57,7 +57,7 @@ def rotate_point_3d_around_axis(init_pose, rotate_axis, theta, clockwise=True):
         rotation_matrix = np.array(
             [[cos_theta, -sin_theta, 0], [sin_theta, cos_theta, 0], [0, 0, 1]]
         )
-        rotated_quaternion = p.getQuaternionFromEuler([0, 0, theta / 2])
+        rotated_quaternion = p.getQuaternionFromEuler([0, 0, theta])
         rotated_orientation = p.multiplyTransforms(
             [0, 0, 0],
             rotated_quaternion,
@@ -108,24 +108,40 @@ def main(filename):
     # Get goal joint values
     min_x, min_y, min_z, max_x, max_y, max_z = client.get_link_bounding_box("fridge", 2)
     tmp_pose = Pose(
-        [(min_x + max_x) / 2, (min_y + max_y) / 2 + 0.02, (min_z + max_z) / 2],
-        [0.0, math.pi / 2, math.pi / 4],
+        [(min_x + max_x) / 2, (min_y + max_y) / 2 - 0.1, (min_z + max_z) / 2],
+        [-math.pi/2, -math.pi/2, 0.0],
     )
     panda.sim_move_end_effector_to_goal_pose(tmp_pose, 100)
-    panda.sim_create_gripper_constraint("fridge", 1)
+    
+    tmp_pose = Pose(
+        [(min_x + max_x) / 2, (min_y + max_y) / 2 + 0.02, (min_z + max_z) / 2],
+        [-math.pi/2, -math.pi/2, 0.0],
+    )
+    panda.sim_move_end_effector_to_goal_pose(tmp_pose, 50)
+    
+    panda.sim_close_gripper()
+    panda.sim_create_gripper_constraint('fridge', 2)
+    
+    tmp_pose = Pose(
+        [(min_x + max_x) / 2, (min_y + max_y) / 2 - 0.3, (min_z + max_z) / 2],
+        [-math.pi/2, -math.pi/2, 0.0],
+    )
+    panda.sim_move_end_effector_to_goal_pose(tmp_pose, 50)
 
-    # The end effector Move along the specified trajectory get effector to open the door
-    init_pose = panda.sim_get_current_end_effector_pose()
-    rotate_axis = p.getLinkState(client.get_object_id("fridge"), 1)[4]
-    angles = 15
-    heta_values = [math.radians(deg) for deg in range(0, angles + 1)]
-    rotated_joints = [
-        panda.sim_cartesian_to_joints(
-            rotate_point_3d_around_axis(init_pose, rotate_axis, theta, False)
-        )
-        for theta in heta_values
-    ]
-    panda.sim_execute_trajectory(rotated_joints, True)
+    # panda.sim_create_gripper_constraint("fridge", 1)
+
+    # # The end effector Move along the specified trajectory get effector to open the door
+    # init_pose = panda.sim_get_current_end_effector_pose()
+    # rotate_axis = p.getLinkState(client.get_object_id("fridge"), 1)[4]
+    # angles = 15
+    # heta_values = [math.radians(deg) for deg in range(0, angles + 1)]
+    # rotated_joints = [
+    #     panda.sim_cartesian_to_joints(
+    #         rotate_point_3d_around_axis(init_pose, rotate_axis, theta, False)
+    #     )
+    #     for theta in heta_values
+    # ]
+    # panda.sim_execute_trajectory(rotated_joints, True)
 
     # Wait
     client.wait(50)
