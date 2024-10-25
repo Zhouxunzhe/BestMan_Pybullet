@@ -134,82 +134,7 @@ class Bestman_sim_panda(Bestman_sim):
                 self.arm_id, i, p.POSITION_CONTROL, open_width, force=100
             )
         self.client.run(30)
-
-    # def sim_create_gripper_constraint(self, object, link_id):
-    #     """
-    #     Activate or deactivate the gripper for a movable object.
-
-    #     Args:
-    #         object (str): The name or ID of the object related to gripper action.
-    #         link_id (int): The ID of the link on the object to be grasped.
-    #         value (int): 0 or 1, where 0 means deactivate (ungrasp) and 1 means activate (grasp).
-    #     """
-    #     object_id = self.client.resolve_object_id(object)
-
-    #     # cretae constraint
-    #     if self.constraint_id == None:
-    #         link_state = p.getLinkState(object_id, link_id)
-    #         vec_inv, quat_inv = p.invertTransform(link_state[0], link_state[1])
-    #         if self.tcp_link != -1:
-    #             current_pose = self.client.get_object_link_pose(
-    #                 self.arm_id, self.tcp_link
-    #             )
-    #             transform_start_to_link = p.multiplyTransforms(
-    #                 vec_inv,
-    #                 quat_inv,
-    #                 current_pose.get_position(),
-    #                 current_pose.get_orientation(),
-    #             )
-    #             self.constraint_id = p.createConstraint(
-    #                 parentBodyUniqueId=object_id,
-    #                 parentLinkIndex=link_id,
-    #                 childBodyUniqueId=self.arm_id,
-    #                 childLinkIndex=self.tcp_link,
-    #                 jointType=p.JOINT_POINT2POINT,
-    #                 jointAxis=[0, 0, 0],
-    #                 parentFramePosition=transform_start_to_link[0],
-    #                 parentFrameOrientation=transform_start_to_link[1],
-    #                 childFramePosition=[0, 0, 0],
-    #             )
-    #         else:
-    #             current_pose = self.client.get_object_link_pose(
-    #                 self.arm_id, self.end_effector_index
-    #             )
-    #             transform_start_to_link = p.multiplyTransforms(
-    #                 vec_inv,
-    #                 quat_inv,
-    #                 current_pose.get_position(),
-    #                 current_pose.get_orientation(),
-    #             )
-    #             self.constraint_id = p.createConstraint(
-    #                 parentBodyUniqueId=object_id,
-    #                 parentLinkIndex=link_id,
-    #                 childBodyUniqueId=self.arm_id,
-    #                 childLinkIndex=self.tcp_link,
-    #                 jointType=p.JOINT_POINT2POINT,
-    #                 jointAxis=[0, 0, 0],
-    #                 parentFramePosition=transform_start_to_link[0],
-    #                 parentFrameOrientation=transform_start_to_link[1],
-    #                 childFramePosition=[0, 0, 0],
-    #             )
-    #         p.changeConstraint(self.constraint_id, maxForce=2000)
-    #         self.client.run(40)
-    #         print("[BestMan_Sim][Gripper] Gripper constraint has been created!")
     
-    def sim_create_gripper_constraint(self, object, link_id):
-        object_id = self.client.resolve_object_id(object)
-        self.constraint_id = p.createConstraint(
-            parentBodyUniqueId=self.arm_id,
-            parentLinkIndex=8,
-            childBodyUniqueId=object_id,
-            childLinkIndex=link_id,
-            jointType=p.JOINT_POINT2POINT,
-            jointAxis=[0, 0, 0],
-            parentFramePosition=[0, 0, 0],
-            childFramePosition=[0, 0, 0]
-        )
-
-
     def sim_interactive_set_gripper(self, duration=20):
         print("[BestMan_Sim][Gripper] \033[34mInfo\033[0m: Interact start!")
         if self.gripper_control is None:
@@ -221,6 +146,29 @@ class Bestman_sim_panda(Bestman_sim):
             target_gripper_width = p.readUserDebugParameter(gripper_control)
             self.sim_move_gripper(target_gripper_width)
         print("[BestMan_Sim][Gripper] \033[34mInfo\033[0m: Interact over!")
+    
+    def sim_create_gripper_constraint(self, object, link_id):
+        object_id = self.client.resolve_object_id(object)
+        link_state = p.getLinkState(object_id, link_id)
+        vec_inv, quat_inv = p.invertTransform(link_state[0], link_state[1])
+        current_pose = self.client.get_object_link_pose(self.arm_id, 8)
+        transform_start_to_link = p.multiplyTransforms(
+            vec_inv,
+            quat_inv,
+            current_pose.get_position(),
+            current_pose.get_orientation(),
+        )
+        self.constraint_id = p.createConstraint(
+            parentBodyUniqueId=object_id,
+            parentLinkIndex=link_id,
+            childBodyUniqueId=self.arm_id,
+            childLinkIndex=8,
+            jointType=p.JOINT_POINT2POINT,
+            jointAxis=[0, 0, 0],
+            parentFramePosition=transform_start_to_link[0],
+            parentFrameOrientation=transform_start_to_link[1],
+            childFramePosition=[0, 0, 0],
+        )
 
     def sim_remove_gripper_constraint(self):
         """remove constraint"""

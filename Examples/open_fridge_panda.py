@@ -17,7 +17,6 @@ import pybullet as p
 
 from Config import load_config
 from Env import Client
-from Motion_Planning.Manipulation.OMPL_Planner import OMPL_Planner
 from Robotics_API import Bestman_sim_panda, Pose
 from Visualization import Visualizer
 
@@ -102,9 +101,6 @@ def main(filename):
     # Draw fridge door handle
     visualizer.draw_aabb_link("fridge", 2)
 
-    # Init planner
-    ompl_planner = OMPL_Planner(panda, cfg.Planner)
-
     # Get goal joint values
     min_x, min_y, min_z, max_x, max_y, max_z = client.get_link_bounding_box("fridge", 2)
     tmp_pose = Pose(
@@ -122,26 +118,18 @@ def main(filename):
     panda.sim_close_gripper()
     panda.sim_create_gripper_constraint('fridge', 2)
     
-    tmp_pose = Pose(
-        [(min_x + max_x) / 2, (min_y + max_y) / 2 - 0.3, (min_z + max_z) / 2],
-        [-math.pi/2, -math.pi/2, 0.0],
-    )
-    panda.sim_move_end_effector_to_goal_pose(tmp_pose, 50)
-
-    # panda.sim_create_gripper_constraint("fridge", 1)
-
-    # # The end effector Move along the specified trajectory get effector to open the door
-    # init_pose = panda.sim_get_current_end_effector_pose()
-    # rotate_axis = p.getLinkState(client.get_object_id("fridge"), 1)[4]
-    # angles = 15
-    # heta_values = [math.radians(deg) for deg in range(0, angles + 1)]
-    # rotated_joints = [
-    #     panda.sim_cartesian_to_joints(
-    #         rotate_point_3d_around_axis(init_pose, rotate_axis, theta, False)
-    #     )
-    #     for theta in heta_values
-    # ]
-    # panda.sim_execute_trajectory(rotated_joints, True)
+    # The end effector Move along the specified trajectory get effector to open the door
+    init_pose = panda.sim_get_current_end_effector_pose()
+    rotate_axis = p.getLinkState(client.get_object_id("fridge"), 1)[4]
+    angles = 15
+    heta_values = [math.radians(deg) for deg in range(0, angles + 1)]
+    rotated_joints = [
+        panda.sim_cartesian_to_joints(
+            rotate_point_3d_around_axis(init_pose, rotate_axis, theta, False)
+        )
+        for theta in heta_values
+    ]
+    panda.sim_execute_trajectory(rotated_joints, True)
 
     # Wait
     client.wait(50)
