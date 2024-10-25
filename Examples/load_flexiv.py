@@ -33,6 +33,8 @@ def main(filename):
 
     # Init robot
     flexiv = Bestman_sim_flexiv(client, visualizer, cfg)
+    
+    flexiv.sim_interactive_set_gripper(20)
 
     # flexiv.sim_print_arm_jointInfo()
     
