@@ -125,7 +125,7 @@ def main(filename):
     visualizer.remove_all_line()
 
     # The end effector Move along the specified trajectory get effector to open the door
-    init_pose = bestman.sim_get_current_end_effector_pose()
+    init_pose = bestman.sim_get_current_eef_pose()
     rotate_axis = p.getLinkState(client.get_object_id("fridge"), 1)[4]
     angles = 80
     heta_values = [math.radians(deg) for deg in range(0, angles + 1)]

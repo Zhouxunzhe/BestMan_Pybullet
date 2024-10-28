@@ -37,9 +37,9 @@ def main():
 
     # Init robot
     bestman = Bestman_sim_panda(client, visualizer, cfg)
-    end_effector_pose = bestman.sim_get_current_end_effector_pose()
-    end_effector_pose.print("init end effector pose")
-    visualizer.draw_pose(end_effector_pose)
+    eef_pose = bestman.sim_get_current_eef_pose()
+    eef_pose.print("init end effector pose")
+    visualizer.draw_pose(eef_pose)
 
     # Debug, look for rgb and depth
     # bestman.sim_get_camera_rgb_image(False, True, "rgb_test")
@@ -78,15 +78,15 @@ def main():
     # bestman.execute_trajectory(path, enable_plot=True)
 
     # bestman.sim_open_gripper()
-    # bestman.sim_move_end_effector_to_goal_pose(best_pose, 50)
-    # visualizer.draw_link_pose(bestman.sim_get_arm_id(), bestman.sim_get_end_effector_link())
+    # bestman.sim_move_eef_to_goal_pose(best_pose, 50)
+    # visualizer.draw_link_pose(bestman.sim_get_arm_id(), bestman.sim_get_eef_link())
     bestman.pick(best_pose)
     tmp_position = best_pose.get_position()
     tmp_pose = Pose(
         [tmp_position[0], tmp_position[1], tmp_position[2] + 0.4],
         best_pose.get_orientation(),
     )
-    bestman.sim_move_end_effector_to_goal_pose(tmp_pose, 50)
+    bestman.sim_move_eef_to_goal_pose(tmp_pose, 50)
 
     # client.wait(5)
     # bestman.sim_close_gripper()

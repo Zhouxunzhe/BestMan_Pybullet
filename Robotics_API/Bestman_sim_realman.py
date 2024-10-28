@@ -36,40 +36,6 @@ class Bestman_sim_realman(Bestman_sim):
         # Init parent class: BestMan_sim
         super().__init__(client, visualizer, cfg)
 
-        # Init arm
-        arm_pose = self.sim_get_sync_arm_pose()
-        self.arm_id = self.client.load_object(
-            obj_name="arm",
-            model_path=self.robot_cfg.arm_urdf_path,
-            object_position=arm_pose.get_position(),
-            object_orientation=arm_pose.get_orientation(),
-            fixed_base=True,
-        )
-        self.arm_jointInfo = self.sim_get_arm_all_jointInfo()
-        self.arm_lower_limits = [info.lowerLimit for info in self.arm_jointInfo]
-        self.arm_upper_limits = [info.upperLimit for info in self.arm_jointInfo]
-        self.arm_joint_ranges = [
-            info.upperLimit - info.lowerLimit for info in self.arm_jointInfo
-        ]
-
-        self.sim_sync_arm_pose()
-        
-        # Add constraint between base and arm
-        # p.createConstraint(
-        #     parentBodyUniqueId=self.base_id,
-        #     parentLinkIndex=-1,
-        #     childBodyUniqueId=self.arm_id,
-        #     childLinkIndex=-1,
-        #     jointType=p.JOINT_FIXED,
-        #     jointAxis=[0, 0, 0],
-        #     parentFramePosition=[0, 0, 0],
-        #     childFramePosition=[0, 0, 0],
-        #     physicsClientId=self.client_id,
-        # )
-
-        # Init arm joint angle
-        self.sim_set_arm_to_joint_values(self.robot_cfg.arm_init_jointValues)
-
         # change robot color
         # self.visualizer.change_robot_color(self.base_id, self.arm_id, False)
 
@@ -180,7 +146,7 @@ class Bestman_sim_realman(Bestman_sim):
                 )
             else:
                 current_pose = self.client.get_object_link_pose(
-                    self.arm_id, self.end_effector_index
+                    self.arm_id, self.eef_id
                 )
                 transform_start_to_link = p.multiplyTransforms(
                     vec_inv,
@@ -238,11 +204,11 @@ class Bestman_sim_realman(Bestman_sim):
             [pick_position[0], pick_position[1], pick_position[2] + 0.5],
             pick_orientation,
         )
-        self.sim_move_end_effector_to_goal_pose(tmp_pose1, 100)
+        self.sim_move_eef_to_goal_pose(tmp_pose1, 100)
         self.sim_open_gripper()
-        self.sim_move_end_effector_to_goal_pose(tmp_pose2, 100)
+        self.sim_move_eef_to_goal_pose(tmp_pose2, 100)
         self.sim_close_gripper()
-        self.sim_move_end_effector_to_goal_pose(tmp_pose3, 100)
+        self.sim_move_eef_to_goal_pose(tmp_pose3, 100)
 
     def place(self, place_pose):
         """
@@ -259,8 +225,8 @@ class Bestman_sim_realman(Bestman_sim):
             [place_position[0], place_position[1], place_position[2] + 0.06],
             place_orientation,
         )
-        self.sim_move_end_effector_to_goal_pose(tmp_pose1, 100)
-        self.sim_move_end_effector_to_goal_pose(place_pose, 100)
+        self.sim_move_eef_to_goal_pose(tmp_pose1, 100)
+        self.sim_move_eef_to_goal_pose(place_pose, 100)
         self.sim_open_gripper()
 
     def pick_place(self, object, goal_pose):

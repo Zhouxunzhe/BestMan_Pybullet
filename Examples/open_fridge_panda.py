@@ -107,19 +107,19 @@ def main(filename):
         [(min_x + max_x) / 2, (min_y + max_y) / 2 - 0.1, (min_z + max_z) / 2],
         [-math.pi/2, -math.pi/2, 0.0],
     )
-    panda.sim_move_end_effector_to_goal_pose(tmp_pose, 100)
+    panda.sim_move_eef_to_goal_pose(tmp_pose, 100)
     
     tmp_pose = Pose(
         [(min_x + max_x) / 2, (min_y + max_y) / 2 + 0.02, (min_z + max_z) / 2],
         [-math.pi/2, -math.pi/2, 0.0],
     )
-    panda.sim_move_end_effector_to_goal_pose(tmp_pose, 50)
+    panda.sim_move_eef_to_goal_pose(tmp_pose, 50)
     
     panda.sim_close_gripper()
     panda.sim_create_gripper_constraint('fridge', 2)
     
     # The end effector Move along the specified trajectory get effector to open the door
-    init_pose = panda.sim_get_current_end_effector_pose()
+    init_pose = panda.sim_get_current_eef_pose()
     rotate_axis = p.getLinkState(client.get_object_id("fridge"), 1)[4]
     angles = 15
     heta_values = [math.radians(deg) for deg in range(0, angles + 1)]

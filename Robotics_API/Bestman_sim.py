@@ -38,7 +38,7 @@ class Bestman_sim(ABC):
         arm_id (int): The arm id of the URDF model.
         arm_joints_idx (list): A list of joint indexes.
         arm_height (float): The height of the arm.
-        end_effector_index (int): The index of the end effector.
+        eef_id (int): The index of the end effector.
         tcp_link (int): The tcp link index.
         tcp_height (float): The height of the tcp link.
 
@@ -88,14 +88,49 @@ class Bestman_sim(ABC):
         self.base_rotated = False
         self.current_base_yaw = self.base_init_pose.get_orientation("euler")[2]
 
-        # Arm info
+        # Init arm
         self.arm_joints_idx = self.robot_cfg.arm_joints_idx
         self.DOF = len(self.arm_joints_idx)
         self.arm_place_height = self.robot_cfg.arm_place_height
-        self.end_effector_index = self.robot_cfg.end_effector_index
+        self.eef_id = self.robot_cfg.eef_id
         self.tcp_link = self.robot_cfg.tcp_link
         self.tcp_height = self.robot_cfg.tcp_height
         self.arm_reset_jointValues = self.robot_cfg.arm_reset_jointValues
+        
+        arm_pose = self.sim_get_sync_arm_pose()
+        self.arm_id = self.client.load_object(
+            obj_name="arm",
+            model_path=self.robot_cfg.arm_urdf_path,
+            object_position=arm_pose.get_position(),
+            object_orientation=arm_pose.get_orientation(),
+            fixed_base=True,
+        )
+        self.arm_jointInfo = self.sim_get_arm_jointInfo()
+        self.arm_lowerLimit = [info.lowerLimit for info in self.arm_jointInfo if info.id in self.arm_joints_idx]
+        self.arm_upperLimit = [info.upperLimit for info in self.arm_jointInfo if info.id in self.arm_joints_idx]
+        self.arm_jointRange = [
+            info.upperLimit - info.lowerLimit for info in self.arm_jointInfo if info.id in self.arm_joints_idx
+        ]
+        self.arm_maxForce = [info.maxForce for info in self.arm_jointInfo if info.id in self.arm_joints_idx]
+        self.arm_maxVelocity = [info.maxVelocity for info in self.arm_jointInfo if info.id in self.arm_joints_idx]
+        
+        # Add constraint between base and arm
+        p.createConstraint(
+            parentBodyUniqueId=self.base_id,
+            parentLinkIndex=-1,
+            childBodyUniqueId=self.arm_id,
+            childLinkIndex=-1,
+            jointType=p.JOINT_FIXED,
+            jointAxis=[0, 0, 0],
+            parentFramePosition=[0, 0, 0],
+            childFramePosition=[0, 0, 0],
+            physicsClientId=self.client_id,
+        )
+
+        self.sim_sync_arm_pose()
+        
+        # Init arm joint angle
+        self.sim_set_arm_to_joint_values(self.robot_cfg.arm_init_jointValues)
 
         # Grasp constraint
         self.constraint_id = None  # grasp constraint id
@@ -104,10 +139,10 @@ class Bestman_sim(ABC):
         self.Camera_cfg = cfg.Camera
         self.camera = Camera(self.Camera_cfg, self.base_id, self.arm_place_height)
 
-        # Init sliders for interact
-        self.arm_control = []
-        self.gripper_control = None
-
+        # Parameters for interactivate control
+        self.interact_params = {}
+        # self.arm_control_params = []
+        
     # ----------------------------------------------------------------
     # functions for base
     # ----------------------------------------------------------------
@@ -646,16 +681,16 @@ class Bestman_sim(ABC):
         """
         return self.tcp_height
 
-    def sim_get_end_effector_link(self):
+    def sim_get_eef_link(self):
         """
         Retrieves the end effector link id
 
         Returns:
             str: The end effector link id of the robot arm.
         """
-        return self.end_effector_index
+        return self.eef_id
 
-    def sim_get_arm_all_jointInfo(self):
+    def sim_get_arm_jointInfo(self):
         """
         get all arm joints info
 
@@ -717,7 +752,7 @@ class Bestman_sim(ABC):
         """
         Print information about each joint of arm
         """
-        arm_joint_info = self.sim_get_arm_all_jointInfo()
+        arm_joint_info = self.sim_get_arm_jointInfo()
         for info in arm_joint_info:
             print(f"Joint ID: {info.id}")
             print(f"Joint Name: {info.name}")
@@ -754,16 +789,16 @@ class Bestman_sim(ABC):
         ]
         return current_joint_values
 
-    def sim_get_current_end_effector_pose(self):
+    def sim_get_current_eef_pose(self):
         """
         Retrieve arm's end effect information
         """
-        end_effector_info = p.getLinkState(
+        eef_info = p.getLinkState(
             bodyUniqueId=self.arm_id,
-            linkIndex=self.end_effector_index,
+            linkIndex=self.eef_id,
             physicsClientId=self.client_id,
         )
-        return Pose(end_effector_info[0], end_effector_info[1])
+        return Pose(eef_info[0], eef_info[1])
 
     def sim_set_arm_to_joint_values(self, joint_values):
         """
@@ -817,7 +852,7 @@ class Bestman_sim(ABC):
             )
         )
 
-    def sim_interactive_set_arm(self, duration=20):
+    def sim_interactive_control_arm(self, duration=20):
         """
         Interactive function to set the robotic arm joint values for a given duration.
 
@@ -825,27 +860,23 @@ class Bestman_sim(ABC):
             duration (int): Duration in seconds for how long the interaction should be allowed.
         """
         print("[BestMan_Sim][Arm] \033[34mInfo\033[0m: Interact start!")
-        if len(self.arm_control) == 0:
-            self.arm_control.extend(
-                [
-                    p.addUserDebugParameter(
+        for info in self.arm_jointInfo:
+            if info.id in self.arm_joints_idx and info.name not in self.interact_params:
+                self.interact_params[info.id] = p.addUserDebugParameter(
                         info.name,
                         info.lowerLimit,
                         info.upperLimit,
                         p.getJointState(self.arm_id, info.id)[0],
                     )
-                    for info in self.arm_jointInfo
-                ]
-            )
         start_time = time.time()
         while time.time() - start_time < duration:
             target_joint_position = [
-                p.readUserDebugParameter(self.arm_control[joint_index])
+                p.readUserDebugParameter(self.interact_params[joint_index])
                 for joint_index in self.arm_joints_idx
             ]
             self.sim_move_arm_to_joint_values(target_joint_position)
         print("[BestMan_Sim][Arm] \033[34mInfo\033[0m: Interact over!")
-
+    
     def sim_move_arm_to_joint_values(self, joint_values, threshold=0.015, timeout=0.05):
         """
         Move arm to move to a specific set of joint angles, with considering physics
@@ -859,6 +890,8 @@ class Bestman_sim(ABC):
             jointIndices=self.arm_joints_idx,
             controlMode=p.POSITION_CONTROL,
             targetPositions=joint_values,
+            forces=self.arm_maxForce,
+            targetVelocities=self.arm_maxVelocity,
             physicsClientId=self.client_id,
         )
 
@@ -883,7 +916,7 @@ class Bestman_sim(ABC):
         #         # print("-" * 20 + "\n" + "Timeout before reaching target joint position.")
         #         break
 
-        self.client.run(10)
+        self.client.run(20)
 
     def sim_joints_to_cartesian(self, joint_values):
         """
@@ -898,15 +931,15 @@ class Bestman_sim(ABC):
 
         self.sim_move_arm_to_joint_values(joint_values)
 
-        end_effector_info = p.getLinkState(
+        eef_info = p.getLinkState(
             bodyUniqueId=self.arm_id,
-            linkIndex=self.end_effector_index,
+            linkIndex=self.eef_id,
             physicsClientId=self.client_id,
         )
         orientation = p.getEulerFromQuaternion(
-            end_effector_info[1], physicsClientId=self.client_id
+            eef_info[1], physicsClientId=self.client_id
         )
-        position = end_effector_info[0]
+        position = eef_info[0]
         return Pose(position, orientation)
 
     def sim_cartesian_to_joints(self, pose, max_iterations=1000, threshold=1e-4):
@@ -922,19 +955,19 @@ class Bestman_sim(ABC):
         """
         joint_values = p.calculateInverseKinematics(
             bodyUniqueId=self.arm_id,
-            endEffectorLinkIndex=self.end_effector_index,
+            endEffectorLinkIndex=self.eef_id,
             targetPosition=pose.get_position(),
             targetOrientation=pose.get_orientation(),
-            lowerLimits=self.arm_lower_limits,
-            upperLimits=self.arm_upper_limits,
-            jointRanges=self.arm_joint_ranges,
+            lowerLimits=self.arm_lowerLimit,
+            upperLimits=self.arm_upperLimit,
+            jointRanges=self.arm_jointRange,
             restPoses=self.arm_reset_jointValues,
             maxNumIterations=max_iterations,
             residualThreshold=threshold,
         )[: self.DOF]
         return joint_values
 
-    def sim_rotate_end_effector(self, angle):
+    def sim_rotate_eef(self, angle):
         """
         Rotate the end effector of the robot arm by a specified angle.
 
@@ -975,24 +1008,24 @@ class Bestman_sim(ABC):
 
         print("[BestMan_Sim][Arm] \033[34mInfo\033[0m: Rotate end effector completed!")
 
-    def sim_move_end_effector_to_goal_pose(
-        self, end_effector_goal_pose, steps=10, threshold=0.2
+    def sim_move_eef_to_goal_pose(
+        self, eef_goal_pose, steps=10, threshold=0.2
     ):
         """
         Move arm's end effector to a target position.
 
         Args:
-            end_effector_goal_pose (Pose): The desired pose of the end effector (includes both position and orientation).
+            eef_goal_pose (Pose): The desired pose of the end effector (includes both position and orientation).
         """
 
-        start_pose = self.sim_get_current_end_effector_pose()
+        start_pose = self.sim_get_current_eef_pose()
         for t in np.linspace(0, 1, steps):
             interpolated_position = (1 - t) * np.array(
                 start_pose.get_position()
-            ) + t * np.array(end_effector_goal_pose.get_position())
+            ) + t * np.array(eef_goal_pose.get_position())
             interpolated_orientation = p.getQuaternionSlerp(
                 start_pose.get_orientation(),
-                end_effector_goal_pose.get_orientation(),
+                eef_goal_pose.get_orientation(),
                 t,
             )
             interpolated_pose = Pose(interpolated_position, interpolated_orientation)
@@ -1003,7 +1036,7 @@ class Bestman_sim(ABC):
             #         "[BestMan_Sim][Arm] \033[31merror\033[0m: The arm collides with other objects!"
             #     )
             #     return
-        ik_error = self.sim_calculate_IK_error(end_effector_goal_pose)
+        ik_error = self.sim_calculate_IK_error(eef_goal_pose)
         if ik_error >= threshold:
             print(
                 f"[BestMan_Sim][Arm] \033[33mwarning\033[0m: The robot arm don't reach the specified position! IK error: {ik_error}"
@@ -1024,8 +1057,8 @@ class Bestman_sim(ABC):
             self.sim_move_arm_to_joint_values(trajectory[i])
 
             # if i % 3 == 0:
-            # self.visualizer.draw_link_pose(self.arm_id, self.end_effector_index)
-            current_point = self.sim_get_current_end_effector_pose().get_position()
+            # self.visualizer.draw_link_pose(self.arm_id, self.eef_id)
+            current_point = self.sim_get_current_eef_pose().get_position()
 
             # draw the trajectory
             if i != 0 and enable_plot:
@@ -1060,9 +1093,9 @@ class Bestman_sim(ABC):
             goal_orientation: The desired goal orientation for the target object.
         """
 
-        end_effector_pose = self.sim_get_current_end_effector_pose()
+        eef_pose = self.sim_get_current_eef_pose()
         distance = np.linalg.norm(
-            np.array(end_effector_pose.get_position())
+            np.array(eef_pose.get_position())
             - np.array(goal_pose.get_position())
         )
         return distance

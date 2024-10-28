@@ -35,7 +35,7 @@ def main(filename):
     elephant = Bestman_sim_elephant(client, visualizer, cfg)
 
     # Interact with arm
-    # panda.sim_interactive_set_arm(50)
+    # panda.sim_interactive_control_arm(50)
 
     # Interact with gripper
     # panda.sim_interactive_set_gripper()

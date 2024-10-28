@@ -36,41 +36,8 @@ class Bestman_sim_elephant(Bestman_sim):
 
         # Init parent class: BestMan_sim
         super().__init__(client, visualizer, cfg)
-
-        # Init arm
-        arm_pose = self.sim_get_sync_arm_pose()
-        self.arm_id = self.client.load_object(
-            obj_name="arm",
-            model_path=self.robot_cfg.arm_urdf_path,
-            object_position=arm_pose.get_position(),
-            object_orientation=arm_pose.get_orientation(),
-            fixed_base=True,
-        )
-        self.arm_jointInfo = self.sim_get_arm_all_jointInfo()
-        self.arm_lower_limits = [info.lowerLimit for info in self.arm_jointInfo]
-        self.arm_upper_limits = [info.upperLimit for info in self.arm_jointInfo]
-        self.arm_joint_ranges = [
-            info.upperLimit - info.lowerLimit for info in self.arm_jointInfo
-        ]
-
-        # Add constraint between base and arm
-        p.createConstraint(
-            parentBodyUniqueId=self.base_id,
-            parentLinkIndex=-1,
-            childBodyUniqueId=self.arm_id,
-            childLinkIndex=-1,
-            jointType=p.JOINT_FIXED,
-            jointAxis=[0, 0, 0],
-            parentFramePosition=[0, 0, 0],
-            childFramePosition=[0, 0, 0],
-            physicsClientId=self.client_id,
-        )
-
-        # Init arm joint angle
-        self.sim_set_arm_to_joint_values(self.robot_cfg.arm_init_jointValues)
         
         # change robot color
-        # self.visualizer.change_robot_color(self.base_id, self.arm_id, False)
         self.visualizer.set_object_color(self.base_id, "light_white")
 
     # ----------------------------------------------------------------

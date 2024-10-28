@@ -37,38 +37,6 @@ class Bestman_sim_xarm(Bestman_sim):
         # Init parent class: BestMan_sim
         super().__init__(client, visualizer, cfg)
 
-        # Init arm
-        arm_pose = self.sim_get_sync_arm_pose()
-        self.arm_id = self.client.load_object(
-            obj_name="arm",
-            model_path=self.robot_cfg.arm_urdf_path,
-            object_position=arm_pose.get_position(),
-            object_orientation=arm_pose.get_orientation(),
-            fixed_base=True,
-        )
-        self.arm_jointInfo = self.sim_get_arm_all_jointInfo()
-        self.arm_lower_limits = [info.lowerLimit for info in self.arm_jointInfo]
-        self.arm_upper_limits = [info.upperLimit for info in self.arm_jointInfo]
-        self.arm_joint_ranges = [
-            info.upperLimit - info.lowerLimit for info in self.arm_jointInfo
-        ]
-
-        # Add constraint between base and arm
-        p.createConstraint(
-            parentBodyUniqueId=self.base_id,
-            parentLinkIndex=-1,
-            childBodyUniqueId=self.arm_id,
-            childLinkIndex=-1,
-            jointType=p.JOINT_FIXED,
-            jointAxis=[0, 0, 0],
-            parentFramePosition=[0, 0, 0],
-            childFramePosition=[0, 0, 0],
-            physicsClientId=self.client_id,
-        )
-
-        # Init arm joint angle
-        self.sim_set_arm_to_joint_values(self.robot_cfg.arm_init_jointValues)
-
         # Create a gear constraint to keep the fingers symmetrically centered
         c = p.createConstraint(
             self.arm_id,
@@ -104,7 +72,7 @@ class Bestman_sim_xarm(Bestman_sim):
             base_pose.get_orientation(),
         )
         return arm_pose
-
+        
     # ----------------------------------------------------------------
     # Functions for gripper
     # ----------------------------------------------------------------
@@ -171,7 +139,7 @@ class Bestman_sim_xarm(Bestman_sim):
                 )
             else:
                 current_pose = self.client.get_object_link_pose(
-                    self.arm_id, self.end_effector_index
+                    self.arm_id, self.eef_id
                 )
                 transform_start_to_link = p.multiplyTransforms(
                     vec_inv,
@@ -194,18 +162,6 @@ class Bestman_sim_xarm(Bestman_sim):
             self.client.run(40)
             print("[BestMan_Sim][Gripper] Gripper constraint has been created!")
 
-    def sim_interactive_set_gripper(self, duration=20):
-        print("[BestMan_Sim][Gripper] \033[34mInfo\033[0m: Interact start!")
-        if self.gripper_control is None:
-            gripper_control = p.addUserDebugParameter(
-                "gripper", self.gripper_range[0], self.gripper_range[1], 0
-            )
-        start_time = time.time()
-        while time.time() - start_time < duration:
-            target_gripper_width = p.readUserDebugParameter(gripper_control)
-            self.sim_move_gripper(target_gripper_width)
-        print("[BestMan_Sim][Gripper] \033[34mInfo\033[0m: Interact over!")
-
     def sim_remove_gripper_constraint(self):
         """remove constraint"""
         if self.constraint_id != None:
@@ -213,6 +169,48 @@ class Bestman_sim_xarm(Bestman_sim):
             self.client.run(40)
             self.constraint_id = None
             print("[BestMan_Sim][Gripper] Gripper constraint has been removed!")
+
+    # ----------------------------------------------------------------
+    # Functions for interact
+    # ----------------------------------------------------------------
+
+    def sim_interactive_control_eef(self, duration=20):
+        print("[BestMan_Sim][Gripper] \033[34mInfo\033[0m: Interact start!")
+        if "x" not in self.interact_params: self.interact_params["x"] = p.addUserDebugParameter("x", -0.224, 0.224, 0)
+        if "y" not in self.interact_params: self.interact_params["y"] = p.addUserDebugParameter("y", -0.224, 0.224, 0)
+        if "z" not in self.interact_params: self.interact_params["z"] = p.addUserDebugParameter("z", 0, 1.0, 0.5)
+        if "roll" not in self.interact_params: self.interact_params["roll"] = p.addUserDebugParameter("roll", -math.pi, math.pi, 0)
+        if "pitch" not in self.interact_params: self.interact_params["pitch"] = p.addUserDebugParameter("pitch", -math.pi, 2* math.pi, math.pi)
+        if "yaw" not in self.interact_params: self.interact_params["yaw"] = p.addUserDebugParameter("yaw", -math.pi, math.pi, 0)
+        # if "gripper_open_width" not in self.interact_params: self.interact_params["gripper_open_width"] = p.addUserDebugParameter("gripper_open_width", self.gripper_range[0], self.gripper_range[1], 0)
+        # last_params = [0, 0, 0, 0, math.pi, 0]
+        
+        start_time = time.time()
+        while time.time() - start_time < duration:
+            x = p.readUserDebugParameter(self.interact_params["x"])
+            y = p.readUserDebugParameter(self.interact_params["y"])
+            z = p.readUserDebugParameter(self.interact_params["z"])
+            roll = p.readUserDebugParameter(self.interact_params["roll"])
+            pitch = p.readUserDebugParameter(self.interact_params["pitch"])
+            yaw = p.readUserDebugParameter(self.interact_params["yaw"])
+            # curr_params = [x, y, z, roll, pitch, yaw]
+            # if not all(abs(a - b) < 0.005 for a, b in zip(curr_params, last_params)):
+            #     curr_pos = self.sim_get_current_eef_pose().get_position()
+            #     interact_pose = Pose([x+curr_pos[0], y+curr_pos[1], z+curr_pos[2]], [roll, pitch, yaw])
+            #     # gripper_opening_width = p.readUserDebugParameter(self.interact_params["gripper_open_width"])
+            #     self.sim_move_eef_to_goal_pose(interact_pose)
+            # last_params = curr_params
+            # self.sim_move_gripper(gripper_opening_width)
+            pos = (x, y, z)
+            orn = p.getQuaternionFromEuler((roll, pitch, yaw))
+            joint_poses = p.calculateInverseKinematics(self.arm_id, self.eef_id, pos, orn,
+                                                       self.arm_lowerLimit, self.arm_upperLimit, self.arm_jointRange, self.arm_reset_jointValues,
+                                                       maxNumIterations=20)
+            for i, joint_id in enumerate(self.arm_joints_idx):
+                p.setJointMotorControl2(self.arm_id, joint_id, p.POSITION_CONTROL, joint_poses[i],
+                                        force=self.arm_jointInfo[joint_id].maxForce, maxVelocity=self.arm_jointInfo[joint_id].maxVelocity)
+            self.client.run(120)
+        print("[BestMan_Sim][Gripper] \033[34mInfo\033[0m: Interact over!")
 
     # ----------------------------------------------------------------
     # Functions for pick and place
@@ -241,11 +239,11 @@ class Bestman_sim_xarm(Bestman_sim):
             [pick_position[0], pick_position[1], pick_position[2] + 0.5],
             pick_orientation,
         )
-        self.sim_move_end_effector_to_goal_pose(tmp_pose1, 100)
+        self.sim_move_eef_to_goal_pose(tmp_pose1, 100)
         self.sim_open_gripper()
-        self.sim_move_end_effector_to_goal_pose(tmp_pose2, 100)
+        self.sim_move_eef_to_goal_pose(tmp_pose2, 100)
         self.sim_close_gripper()
-        self.sim_move_end_effector_to_goal_pose(tmp_pose3, 100)
+        self.sim_move_eef_to_goal_pose(tmp_pose3, 100)
 
     def place(self, place_pose):
         """
@@ -262,8 +260,8 @@ class Bestman_sim_xarm(Bestman_sim):
             [place_position[0], place_position[1], place_position[2] + 0.06],
             place_orientation,
         )
-        self.sim_move_end_effector_to_goal_pose(tmp_pose1, 100)
-        self.sim_move_end_effector_to_goal_pose(place_pose, 100)
+        self.sim_move_eef_to_goal_pose(tmp_pose1, 100)
+        self.sim_move_eef_to_goal_pose(place_pose, 100)
         self.sim_open_gripper()
 
     def pick_place(self, object, goal_pose):

@@ -89,7 +89,7 @@ def main(filename):
     ur5e.sim_create_movable_constraint("elementA", 38)
 
     # The end effector Move along the specified trajectory get effector to open the drawer
-    init_pose = ur5e.sim_get_current_end_effector_pose()
+    init_pose = ur5e.sim_get_current_eef_pose()
     pull_joints = [
         ur5e.sim_cartesian_to_joints(pull_out(init_pose, i, 0.05))
         for i in range(0, 5)
