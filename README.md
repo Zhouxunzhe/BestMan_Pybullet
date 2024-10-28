@@ -36,6 +36,7 @@ A mobile manipulator (with a wheel-base and arm) platform built on PyBullet simu
 - [📝 TODO List](#-todo-list)
 - [🤝 Reference](#-Reference)
 - [👏 Acknowledgements](#-Acknowledgements)
+- [🚀 Working citing BestMan](#-Working-citing-BestMan)
 
 ## 🔥 News
 - [2024-10] We release the [paper](http://arxiv.org/abs/2410.13407) of BestMan.
@@ -238,3 +239,7 @@ If you find this work useful, please consider citing:
 We would like to express our sincere gratitude to all the individuals and organizations who contributed to this project.
 
 For a detailed list of acknowledgements, please refer to [appendix](docs/appendix).
+
+## 🚀 Working citing BestMan
+
+Research has already been conducted based on the BestMan platform. If you are interested, please visit [here](https://bestmanrobot.com/Works_Citing_BestMan) for more details.
