@@ -83,9 +83,6 @@ class Client:
         
         # pybullet data
         self.pybullet_data = pybullet_data.getDataPath()
-        
-        # progress bar
-        self.p_bar = tqdm(ncols=0, disable=False)
 
     # ----------------------------------------------------------------
     # A few basic functions
@@ -136,7 +133,6 @@ class Client:
         for _ in range(x):
             p.stepSimulation(physicsClientId=self.client_id)
             time.sleep(self.timestep)
-            self.p_bar.update(1)
             if self.blender:
                 self.recorder.add_keyframe()
 
