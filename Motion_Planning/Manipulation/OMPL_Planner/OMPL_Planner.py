@@ -55,15 +55,15 @@ class OMPL_Planner:
             bounds.setHigh(i, bound[1])
         self.space.setBounds(bounds)  # set bounds
 
-        # self.ss = og.SimpleSetup(self.space)
-        # self.ss.setStateValidityChecker(
-        #     ob.StateValidityCheckerFn(self.collision.is_state_valid)
-        # )
+        self.ss = og.SimpleSetup(self.space)
+        self.ss.setStateValidityChecker(
+            ob.StateValidityCheckerFn(self.collision.is_state_valid)
+        )
         
-        # self.si = self.ss.getSpaceInformation()
+        self.si = self.ss.getSpaceInformation()
 
-        # # planner cfgs
-        # self.set_planner(Planner_cfg.planner)
+        # planner cfgs
+        self.set_planner(Planner_cfg.planner)
         self.planning_time = Planner_cfg.planning_time
         self.interpolate_num = Planner_cfg.interpolate_num
 
