@@ -13,7 +13,6 @@ Client:
   frequency: 240                  # simulation frequency
   timeout : 100.0                 # maximum time for planning
   blender: False
-  progress_bar: True
 
 # Visualizer params
 Visualizer:

@@ -782,7 +782,7 @@ class Bestman_sim(ABC):
             list: A list of tuples representing the joint bounds, where each tuple contains the minimum and maximum values for a joint.
         """
         joint_bounds = [
-            [info.lowerLimit, info.upperLimit] for info in self.arm_jointInfo
+            [info.lowerLimit, info.upperLimit] for info in self.arm_jointInfo if info.id in self.arm_controllable_joints
         ]
         return joint_bounds
 
