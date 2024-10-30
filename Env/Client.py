@@ -8,6 +8,7 @@
 # @Description:   : pybullet client 
 """
 
+from tqdm import tqdm
 import json
 import math
 import os
@@ -60,7 +61,7 @@ class Client:
 
         p.setAdditionalSearchPath(pybullet_data.getDataPath())
         p.setGravity(cfg.Gravity[0], cfg.Gravity[1], cfg.Gravity[2])
-        p.setPhysicsEngineParameter(numSolverIterations=cfg.numSolverIterations)
+        # p.setPhysicsEngineParameter(numSolverIterations=cfg.numSolverIterations)
         # p.setRealTimeSimulation(1)  # set up real-time simulation
 
         # pybullet recorder for blender show
@@ -82,6 +83,9 @@ class Client:
         
         # pybullet data
         self.pybullet_data = pybullet_data.getDataPath()
+        
+        # progress bar
+        self.p_bar = tqdm(ncols=0, disable=False)
 
     # ----------------------------------------------------------------
     # A few basic functions
@@ -132,6 +136,7 @@ class Client:
         for _ in range(x):
             p.stepSimulation(physicsClientId=self.client_id)
             time.sleep(self.timestep)
+            self.p_bar.update(1)
             if self.blender:
                 self.recorder.add_keyframe()
 

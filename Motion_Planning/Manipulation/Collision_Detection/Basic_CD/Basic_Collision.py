@@ -25,7 +25,7 @@ class Basic_Collision:
         self.client = robot.client
         self.base_id = robot.sim_get_base_id()
         self.arm_id = robot.sim_get_arm_id()
-        self.joint_idx = robot.sim_get_arm_joint_idx()
+        self.arm_controllable_joints = robot.sim_get_arm_controllable_joints()
         self.obstacles = []
         self.setup()
 
@@ -81,7 +81,7 @@ class Basic_Collision:
         """
         # set arm link pairs
         self.arm_link_pairs = (
-            get_arm_link_pairs(self.arm_id, self.joint_idx) if self_collisions else []
+            get_arm_link_pairs(self.arm_id, self.arm_controllable_joints) if self_collisions else []
         )
 
         # set arm obstacle pairs
@@ -164,5 +164,5 @@ class Basic_Collision:
                 )
             )
             != 0
-            for link in self.joint_idx[1:]
+            for link in self.arm_controllable_joints[1:]
         )

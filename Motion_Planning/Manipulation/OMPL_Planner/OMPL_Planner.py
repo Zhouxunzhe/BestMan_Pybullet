@@ -34,14 +34,14 @@ class OMPL_Planner:
         # arm info
         self.robot = robot
         self.arm_id = robot.sim_get_arm_id()
-        self.joint_idx = robot.sim_get_arm_joint_idx()
+        self.arm_controllable_joints = robot.sim_get_arm_controllable_joints()
         self.tcp_link = robot.sim_get_tcp_link()
         self.DOF = robot.sim_get_DOF()
 
         # client info
         self.client = robot.client
         self.client_id = self.client.get_client_id()
-
+        
         # obstacles
         self.target_id = None
         self.collision = Basic_Collision(robot)
@@ -55,15 +55,15 @@ class OMPL_Planner:
             bounds.setHigh(i, bound[1])
         self.space.setBounds(bounds)  # set bounds
 
-        self.ss = og.SimpleSetup(self.space)
-        self.ss.setStateValidityChecker(
-            ob.StateValidityCheckerFn(self.collision.is_state_valid)
-        )
+        # self.ss = og.SimpleSetup(self.space)
+        # self.ss.setStateValidityChecker(
+        #     ob.StateValidityCheckerFn(self.collision.is_state_valid)
+        # )
+        
+        # self.si = self.ss.getSpaceInformation()
 
-        self.si = self.ss.getSpaceInformation()
-
-        # planner cfgs
-        self.set_planner(Planner_cfg.planner)
+        # # planner cfgs
+        # self.set_planner(Planner_cfg.planner)
         self.planning_time = Planner_cfg.planning_time
         self.interpolate_num = Planner_cfg.interpolate_num
 
@@ -114,7 +114,7 @@ class OMPL_Planner:
             list: The goal state in joint space.
         """
         self.target_id = self.client.resolve_object_id(target)
-
+        
         # get target object bounds
         min_x, min_y, _, max_x, max_y, max_z = self.client.get_bounding_box(
             self.target_id

@@ -19,7 +19,7 @@ from .Bestman_sim import Bestman_sim
 from .Pose import Pose
 
 
-class Bestman_sim_xarm(Bestman_sim):
+class Bestman_sim_xarm_with_gripper(Bestman_sim):
     """
     A class representing a simulation for the Bestman robot equipped with a xarm arm.
     """

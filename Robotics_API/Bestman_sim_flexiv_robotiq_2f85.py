@@ -1,7 +1,7 @@
 # !/usr/bin/env python
 # -*- encoding: utf-8 -*-
 """
-# @FileName       : Bestman_sim_flexiv.py
+# @FileName       : Bestman_sim_flexiv_robotiq_2f85.py
 # @Time           : 2024-08-03 15:08:13
 # @Author         : yk
 # @Email          : yangkui1127@gmail.com
@@ -10,8 +10,6 @@
 
 import math
 import time
-
-import numpy as np
 import pybullet as p
 from scipy.spatial.transform import Rotation as R
 
@@ -19,7 +17,7 @@ from .Bestman_sim import Bestman_sim
 from .Pose import Pose
 
 
-class Bestman_sim_flexiv(Bestman_sim):
+class Bestman_sim_flexiv_robotiq_2f85(Bestman_sim):
     """
     A class representing a simulation for the Bestman robot equipped with a flexiv arm.
     """
@@ -46,25 +44,9 @@ class Bestman_sim_flexiv(Bestman_sim):
         # create gripper constraints
         self.create_eef_constraints()
         
-        # # gripper constraints
-        # c = p.createConstraint(self.arm_id, 10, self.arm_id, 11, p.JOINT_POINT2POINT, [0, 0, 0], [0, -0.014, 0.043], [0, -0.034, 0.021])
-        # p.chngeConstraint(c, erp=0.1, maxForce=1000)
-        
-        # c = p.createConstraint(self.arm_id, 12, self.arm_id, 13, p.JOINT_POINT2POINT, [0, 0, 0], [0, -0.014, 0.043], [0, -0.034, 0.021])
-        # p.changeConstraint(c, erp=0.1, maxForce=1000)
-        
-        # p.setJointMotorControl2(self.arm_id, 10, p.VELOCITY_CONTROL, targetVelocity=0, force=0)
-        # p.setJointMotorControl2(self.arm_id, 11, p.VELOCITY_CONTROL, targetVelocity=0, force=0)
-        # p.setJointMotorControl2(self.arm_id, 12, p.VELOCITY_CONTROL, targetVelocity=0, force=0)
-        # p.setJointMotorControl2(self.arm_id, 13, p.VELOCITY_CONTROL, targetVelocity=0, force=0)
-        
-        
-        # c = p.createConstraint(self.arm_id, 8, self.arm_id, 14, p.JOINT_GEAR, [1, 0, 0], [0, 0, 0], [0, 0, 0])
-        # p.changeConstraint(c, gearRatio=-1, erp=0.1, maxForce=50)
-        
-        # # gripper control
-        # p.setJointMotorControlMultiDofArray(self.arm_id, [8, 14], p.POSITION_CONTROL, [[q], [q]], forces=[[t], [t]])a
-
+        # reset gripper
+        self.sim_reset_gripper()
+    
     # ----------------------------------------------------------------
     # Functions for arm
     # ----------------------------------------------------------------
@@ -80,14 +62,19 @@ class Bestman_sim_flexiv(Bestman_sim):
         )
         return arm_pose
 
-    # ----------------------------------------------------------------
+     # ----------------------------------------------------------------
     # Functions for gripper
     # ----------------------------------------------------------------
-
+    
     def create_eef_constraints(self):
         """
         Create constraints for the gripper to control the gripper state。
         """
+        
+        # reset gripper joint state
+        for jointID in self.controllable_joints:
+            if jointID not in self.arm_controllable_joints:
+                p.setJointMotorControl2(self.arm_id, jointID, p.VELOCITY_CONTROL, targetVelocity=0, force=0)
         
         # defines the child joints that move synchronously with the parent joint and their movement ratio
         mimic_parent_name = 'finger_joint'
@@ -109,6 +96,10 @@ class Bestman_sim_flexiv(Bestman_sim):
                                    childFramePosition=[0, 0, 0])
             p.changeConstraint(c, gearRatio=-multiplier, maxForce=100, erp=1)  # Note: the mysterious `erp` is of EXTREME importance
     
+    def sim_reset_gripper(self):
+        "reset gripper"
+        self.sim_open_gripper()
+    
     def sim_open_gripper(self):
         """open gripper"""
         self.sim_move_gripper(self.gripper_range[1])
@@ -118,25 +109,42 @@ class Bestman_sim_flexiv(Bestman_sim):
         """close gripper"""
         self.sim_move_gripper(self.gripper_range[0])
         print("[BestMan_Sim][Gripper] \033[34mInfo\033[0m: Gripper close!")
-    
+
     def sim_move_gripper(self, open_width):
         # open_length = np.clip(open_length, *self.gripper_range)
         open_angle = 0.715 - math.asin((open_width - 0.010) / 0.1143)  # angle calculation
         # Control the mimic gripper joint(s)
         p.setJointMotorControl2(self.arm_id, self.mimic_parent_id, p.POSITION_CONTROL, targetPosition=open_angle,
                                 force=self.arm_jointInfo[self.mimic_parent_id].maxForce, maxVelocity=self.arm_jointInfo[self.mimic_parent_id].maxVelocity)
-        self.client.run(30)
         
-    def sim_interactive_set_gripper(self, duration=20):
+    # ----------------------------------------------------------------
+    # Functions for interact
+    # ----------------------------------------------------------------
+
+    def sim_interactive_control_eef(self, duration=20):
         print("[BestMan_Sim][Gripper] \033[34mInfo\033[0m: Interact start!")
-        if self.gripper_control is None:
-            gripper_control = p.addUserDebugParameter(
-                "gripper", self.gripper_range[0], self.gripper_range[1], 0
-            )
+        curr_x, curr_y, curr_z = self.sim_get_current_eef_pose().get_position()
+        if "x" not in self.interact_params: self.interact_params["x"] = p.addUserDebugParameter("x", curr_x-0.2, curr_x+0.2, curr_x)
+        if "y" not in self.interact_params: self.interact_params["y"] = p.addUserDebugParameter("y", curr_y-0.2, curr_y+0.2, curr_y)
+        if "z" not in self.interact_params: self.interact_params["z"] = p.addUserDebugParameter("z", curr_z-0.5, curr_z+0.5, curr_z)
+        if "roll" not in self.interact_params: self.interact_params["roll"] = p.addUserDebugParameter("roll", -math.pi, math.pi, 0)
+        if "pitch" not in self.interact_params: self.interact_params["pitch"] = p.addUserDebugParameter("pitch", -math.pi, math.pi, math.pi)
+        if "yaw" not in self.interact_params: self.interact_params["yaw"] = p.addUserDebugParameter("yaw", -math.pi/2, math.pi/2, -math.pi/2)
+        if "gripper_open_width" not in self.interact_params: self.interact_params["gripper_open_width"] = p.addUserDebugParameter("gripper_open_width", self.gripper_range[0], self.gripper_range[1], 0.04)
+        import time
         start_time = time.time()
         while time.time() - start_time < duration:
-            target_gripper_width = p.readUserDebugParameter(gripper_control)
-            self.sim_move_gripper(target_gripper_width)
+            x = p.readUserDebugParameter(self.interact_params["x"])
+            y = p.readUserDebugParameter(self.interact_params["y"])
+            z = p.readUserDebugParameter(self.interact_params["z"])
+            roll = p.readUserDebugParameter(self.interact_params["roll"])
+            pitch = p.readUserDebugParameter(self.interact_params["pitch"])
+            yaw = p.readUserDebugParameter(self.interact_params["yaw"])
+            gripper_opening_width = p.readUserDebugParameter(self.interact_params["gripper_open_width"])
+            print(x, y, z, roll, pitch, yaw)
+            self.sim_move_eef_to_goal_pose(Pose([x, y, z], [roll, pitch, yaw]))
+            self.sim_move_gripper(gripper_opening_width)
+            self.client.run(120)
         print("[BestMan_Sim][Gripper] \033[34mInfo\033[0m: Interact over!")
         
     

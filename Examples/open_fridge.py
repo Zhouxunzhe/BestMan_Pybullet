@@ -86,7 +86,7 @@ def main(filename):
     # Load scene
     scene_path = "Asset/Scene/Scene/Kitchen.json"
     client.create_scene(scene_path)
-
+    
     # Start recording
     visualizer.start_record(filename)
 
@@ -105,37 +105,37 @@ def main(filename):
     ompl_planner = OMPL_Planner(bestman, cfg.Planner)
 
     # Get goal joint values
-    min_x, min_y, min_z, max_x, max_y, max_z = client.get_link_bounding_box("fridge", 2)
-    goal_pose = Pose(
-        [
-            min_x - bestman.sim_get_tcp_link_height() - 0.04,
-            (min_y + max_y) / 2,
-            (min_z + max_z) / 2,
-        ],
-        [0.0, 0.0, 0.0],
-    )
-    goal = ompl_planner.set_target_pose(goal_pose)
+    # min_x, min_y, min_z, max_x, max_y, max_z = client.get_link_bounding_box("fridge", 2)
+    # goal_pose = Pose(
+    #     [
+    #         min_x - bestman.sim_get_tcp_link_height() - 0.04,
+    #         (min_y + max_y) / 2,
+    #         (min_z + max_z) / 2,
+    #     ],
+    #     [0.0, 0.0, 0.0],
+    # )
+    # goal = ompl_planner.set_target_pose(goal_pose)
     
-    # Plan / Execute / Suctate fridge handle
-    start = bestman.sim_get_current_joint_values()
-    path = ompl_planner.plan(start, goal)
-    bestman.sim_execute_trajectory(path, True)
-    bestman.sim_create_movable_constraint("fridge", 2)
+    # # Plan / Execute / Suctate fridge handle
+    # start = bestman.sim_get_current_joint_values()
+    # path = ompl_planner.plan(start, goal)
+    # bestman.sim_execute_trajectory(path, True)
+    # bestman.sim_create_movable_constraint("fridge", 2)
     
-    visualizer.remove_all_line()
-
-    # The end effector Move along the specified trajectory get effector to open the door
-    init_pose = bestman.sim_get_current_eef_pose()
-    rotate_axis = p.getLinkState(client.get_object_id("fridge"), 1)[4]
-    angles = 80
-    heta_values = [math.radians(deg) for deg in range(0, angles + 1)]
-    rotated_joints = [
-        bestman.sim_cartesian_to_joints(
-            rotate_point_3d_around_axis(init_pose, rotate_axis, theta, False)
-        )
-        for theta in heta_values
-    ]
-    bestman.sim_execute_trajectory(rotated_joints, True)
+    # visualizer.remove_all_line()
+    
+    # # The end effector Move along the specified trajectory get effector to open the door
+    # init_pose = bestman.sim_get_current_eef_pose()
+    # rotate_axis = p.getLinkState(client.get_object_id("fridge"), 1)[4]
+    # angles = 80
+    # heta_values = [math.radians(deg) for deg in range(0, angles + 1)]
+    # rotated_joints = [
+    #     bestman.sim_cartesian_to_joints(
+    #         rotate_point_3d_around_axis(init_pose, rotate_axis, theta, False)
+    #     )
+    #     for theta in heta_values
+    # ]
+    # bestman.sim_execute_trajectory(rotated_joints, True)
 
     # Wait
     client.wait(5)

@@ -62,6 +62,7 @@ class Bestman_sim(ABC):
         self.enable_cache = (
             p.URDF_ENABLE_CACHED_GRAPHICS_SHAPES
         )  # Enable caching of graphic shapes when loading URDF files
+        self.robot_cfg = cfg.Robot
 
         # Init PID controller
         self.controller_cfg = cfg.Controller
@@ -74,7 +75,6 @@ class Bestman_sim(ABC):
         )
 
         # Init base
-        self.robot_cfg = cfg.Robot
         self.base_init_pose = Pose(
             self.robot_cfg.base_init_pose[:3], self.robot_cfg.base_init_pose[3:]
         )
@@ -89,8 +89,7 @@ class Bestman_sim(ABC):
         self.current_base_yaw = self.base_init_pose.get_orientation("euler")[2]
 
         # Init arm
-        self.arm_joints_idx = self.robot_cfg.arm_joints_idx
-        self.DOF = len(self.arm_joints_idx)
+        self.arm_num_dofs = self.robot_cfg.arm_num_dofs
         self.arm_place_height = self.robot_cfg.arm_place_height
         self.eef_id = self.robot_cfg.eef_id
         self.tcp_link = self.robot_cfg.tcp_link
@@ -98,6 +97,9 @@ class Bestman_sim(ABC):
         self.arm_reset_jointValues = self.robot_cfg.arm_reset_jointValues
         
         arm_pose = self.sim_get_sync_arm_pose()
+        self.base_init_pose = Pose(
+            self.robot_cfg.base_init_pose[:3], self.robot_cfg.base_init_pose[3:]
+        )
         self.arm_id = self.client.load_object(
             obj_name="arm",
             model_path=self.robot_cfg.arm_urdf_path,
@@ -105,14 +107,7 @@ class Bestman_sim(ABC):
             object_orientation=arm_pose.get_orientation(),
             fixed_base=True,
         )
-        self.arm_jointInfo = self.sim_get_arm_jointInfo()
-        self.arm_lowerLimit = [info.lowerLimit for info in self.arm_jointInfo if info.id in self.arm_joints_idx]
-        self.arm_upperLimit = [info.upperLimit for info in self.arm_jointInfo if info.id in self.arm_joints_idx]
-        self.arm_jointRange = [
-            info.upperLimit - info.lowerLimit for info in self.arm_jointInfo if info.id in self.arm_joints_idx
-        ]
-        self.arm_maxForce = [info.maxForce for info in self.arm_jointInfo if info.id in self.arm_joints_idx]
-        self.arm_maxVelocity = [info.maxVelocity for info in self.arm_jointInfo if info.id in self.arm_joints_idx]
+        self.arm_joint_info = self.sim_get_arm_jointInfo()
         
         # Add constraint between base and arm
         p.createConstraint(
@@ -126,14 +121,13 @@ class Bestman_sim(ABC):
             childFramePosition=[0, 0, 0],
             physicsClientId=self.client_id,
         )
-
         self.sim_sync_arm_pose()
         
         # Init arm joint angle
-        self.sim_set_arm_to_joint_values(self.robot_cfg.arm_init_jointValues)
+        self.sim_reset_arm_to_joint_values(self.arm_reset_jointValues)
 
         # Grasp constraint
-        self.constraint_id = None  # grasp constraint id
+        self.constraint_id = None
 
         # Init camera
         self.Camera_cfg = cfg.Camera
@@ -141,7 +135,6 @@ class Bestman_sim(ABC):
 
         # Parameters for interactivate control
         self.interact_params = {}
-        # self.arm_control_params = []
         
     # ----------------------------------------------------------------
     # functions for base
@@ -159,7 +152,7 @@ class Bestman_sim(ABC):
     def sim_get_current_base_pose(self):
         """
         Retrieves the current position and orientation of the robot base.
-
+        
         Returns:
             Pose: A Pose object representing the current pose of the base.
                   The pose contains the position as a list [x, y, z] and the orientation as a list [roll, pitch, yaw].
@@ -643,16 +636,16 @@ class Bestman_sim(ABC):
         Returns:
             int: The degree of freedom of the robot arm.
         """
-        return self.DOF
+        return self.arm_num_dofs
 
-    def sim_get_arm_joint_idx(self):
+    def sim_get_arm_controllable_joints(self):
         """
         Retrieves the indices of the joints in the robot arm.
 
         Returns:
             list: A list of indices for the joints in the robot arm.
         """
-        return self.arm_joints_idx
+        return self.arm_controllable_joints
 
     def sim_get_arm_all_joint_idx(self):
         """
@@ -709,6 +702,7 @@ class Bestman_sim(ABC):
                 "upperLimit",
                 "maxForce",
                 "maxVelocity",
+                "controllable"
             ],
         )
         
@@ -721,7 +715,8 @@ class Bestman_sim(ABC):
             p.JOINT_GEAR: "Gear"
         }
         
-        arm_jointInfo = []
+        self.arm_jointInfo = []
+        self.controllable_joints = []
         for i in range(p.getNumJoints(self.arm_id)):
             info = p.getJointInfo(self.arm_id, i)
             jointID = info[0]
@@ -734,6 +729,9 @@ class Bestman_sim(ABC):
             jointUpperLimit = info[9]
             jointMaxForce = info[10]
             jointMaxVelocity = info[11]
+            controllable = (jointType != "Fixed")
+            if controllable:
+                self.controllable_joints.append(jointID)
             info = jointInfo(
                 jointID,
                 jointName,
@@ -744,16 +742,24 @@ class Bestman_sim(ABC):
                 jointUpperLimit,
                 jointMaxForce,
                 jointMaxVelocity,
+                controllable
             )
-            arm_jointInfo.append(info)
-        return arm_jointInfo
+            self.arm_jointInfo.append(info)
+        
+        assert len(self.controllable_joints) >= self.arm_num_dofs
+        self.arm_controllable_joints = self.controllable_joints[:self.arm_num_dofs]
+        self.arm_lowerLimit = [info.lowerLimit for info in self.arm_jointInfo if info.id in self.arm_controllable_joints]
+        self.arm_upperLimit = [info.upperLimit for info in self.arm_jointInfo if info.id in self.arm_controllable_joints]
+        self.arm_jointRange = [info.upperLimit - info.lowerLimit for info in self.arm_jointInfo if info.id in self.arm_controllable_joints]
+        self.arm_maxForce = [info.maxForce for info in self.arm_jointInfo if info.id in self.arm_controllable_joints]
+        self.arm_maxVelocity = [info.maxVelocity for info in self.arm_jointInfo if info.id in self.arm_controllable_joints]
+        return self.arm_jointInfo
 
     def sim_print_arm_jointInfo(self):
         """
         Print information about each joint of arm
         """
-        arm_joint_info = self.sim_get_arm_jointInfo()
-        for info in arm_joint_info:
+        for info in self.arm_joint_info:
             print(f"Joint ID: {info.id}")
             print(f"Joint Name: {info.name}")
             print(f"Joint Type: {info.type}")
@@ -763,6 +769,7 @@ class Bestman_sim(ABC):
             print(f"Joint Upper Limit: {info.upperLimit}")
             print(f"Joint Max Force: {info.maxForce}")
             print(f"Joint Max Velocity: {info.maxVelocity}")
+            print(f"Joint Controllable: {info.controllable}")
             print("-" * 50)
 
     def sim_get_joint_bounds(self):
@@ -785,7 +792,7 @@ class Bestman_sim(ABC):
         """
         current_joint_values = [
             p.getJointState(self.arm_id, i, physicsClientId=self.client_id)[0]
-            for i in self.arm_joints_idx
+            for i in self.arm_controllable_joints
         ]
         return current_joint_values
 
@@ -800,18 +807,18 @@ class Bestman_sim(ABC):
         )
         return Pose(eef_info[0], eef_info[1])
 
-    def sim_set_arm_to_joint_values(self, joint_values):
+    def sim_reset_arm_to_joint_values(self, joint_values):
         """
         Set arm to move to a specific set of joint angles, witout considering physics
 
         Args:
             joint_values: A list of desired joint angles (in radians) for each joint of the arm.
         """
-        for joint, value in zip(self.arm_joints_idx, joint_values):
-            p.resetJointState(self.arm_id, joint, value, targetVelocity=0)
+        for joint, value in zip(self.arm_controllable_joints, joint_values):
+            p.resetJointState(self.arm_id, joint, value)
         self.client.run(10)
 
-    def sim_debug_set_arm_to_joint_values(self):
+    def sim_debug_reset_arm_to_joint_values(self):
         """
         Manually set each joint value of the arm for debugging purposes.
         """
@@ -845,7 +852,7 @@ class Bestman_sim(ABC):
                     )
                 )
 
-        self.sim_set_arm_to_joint_values(joint_values)
+        self.sim_reset_arm_to_joint_values(joint_values)
         print(
             "[BestMan_Sim][Arm] \033[34mInfo\033[0m: Updated joint angles: {}".format(
                 joint_values
@@ -861,7 +868,7 @@ class Bestman_sim(ABC):
         """
         print("[BestMan_Sim][Arm] \033[34mInfo\033[0m: Interact start!")
         for info in self.arm_jointInfo:
-            if info.id in self.arm_joints_idx and info.name not in self.interact_params:
+            if info.id in self.arm_controllable_joints and info.name not in self.interact_params:
                 self.interact_params[info.id] = p.addUserDebugParameter(
                         info.name,
                         info.lowerLimit,
@@ -872,12 +879,12 @@ class Bestman_sim(ABC):
         while time.time() - start_time < duration:
             target_joint_position = [
                 p.readUserDebugParameter(self.interact_params[joint_index])
-                for joint_index in self.arm_joints_idx
+                for joint_index in self.arm_controllable_joints
             ]
             self.sim_move_arm_to_joint_values(target_joint_position)
         print("[BestMan_Sim][Arm] \033[34mInfo\033[0m: Interact over!")
     
-    def sim_move_arm_to_joint_values(self, joint_values, threshold=0.015, timeout=0.05):
+    def sim_move_arm_to_joint_values(self, joint_values, single=True):
         """
         Move arm to move to a specific set of joint angles, with considering physics
 
@@ -885,15 +892,28 @@ class Bestman_sim(ABC):
             joint_values: A list of desired joint angles (in radians) for each joint of the arm.
         """
 
-        p.setJointMotorControlArray(
-            bodyIndex=self.arm_id,
-            jointIndices=self.arm_joints_idx,
-            controlMode=p.POSITION_CONTROL,
-            targetPositions=joint_values,
-            forces=self.arm_maxForce,
-            targetVelocities=self.arm_maxVelocity,
-            physicsClientId=self.client_id,
-        )
+        if single: 
+            for i, joint_id in enumerate(self.arm_controllable_joints):
+                p.setJointMotorControl2(
+                    self.arm_id, 
+                    joint_id, 
+                    p.POSITION_CONTROL, 
+                    joint_values[i],
+                    force=self.arm_maxForce[i],
+                    maxVelocity=self.arm_maxVelocity[i]
+                )
+        else:
+            p.setJointMotorControlArray(
+                bodyIndex=self.arm_id,
+                jointIndices=self.arm_controllable_joints,
+                controlMode=p.POSITION_CONTROL,
+                targetPositions=joint_values,
+                forces=self.arm_maxForce,
+                targetVelocities=self.arm_maxVelocity,
+                physicsClientId=self.client_id,
+            )
+
+        self.client.run(10)
 
         # start_time = time.time()  # avoid time anomaly
 
@@ -916,7 +936,6 @@ class Bestman_sim(ABC):
         #         # print("-" * 20 + "\n" + "Timeout before reaching target joint position.")
         #         break
 
-        self.client.run(20)
 
     def sim_joints_to_cartesian(self, joint_values):
         """
@@ -942,10 +961,10 @@ class Bestman_sim(ABC):
         position = eef_info[0]
         return Pose(position, orientation)
 
-    def sim_cartesian_to_joints(self, pose, max_iterations=1000, threshold=1e-4):
+    def sim_cartesian_to_joints(self, pose, max_iterations=20, threshold=1e-4):
         """
         Transforms the robot arm's Cartesian coordinates to its joint angles.
-
+        
         Args:
             position (list): The Cartesian position of the robot arm.
             orientation (list): The Cartesian orientation of the robot arm.
@@ -964,7 +983,7 @@ class Bestman_sim(ABC):
             restPoses=self.arm_reset_jointValues,
             maxNumIterations=max_iterations,
             residualThreshold=threshold,
-        )[: self.DOF]
+        )[:self.arm_num_dofs]
         return joint_values
 
     def sim_rotate_eef(self, angle):

@@ -16,7 +16,7 @@ import tty
 
 from Config import load_config
 from Env.Client import Client
-from Robotics_API.Bestman_sim_panda import Bestman_sim_panda
+from Robotics_API.Bestman_sim_panda_with_gripper import Bestman_sim_panda
 from Visualization.Visualizer import Visualizer
 
 
