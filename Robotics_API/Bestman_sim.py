@@ -887,7 +887,7 @@ class Bestman_sim(ABC):
     def sim_move_arm_to_joint_values(self, joint_values, single=True):
         """
         Move arm to move to a specific set of joint angles, with considering physics
-
+        
         Args:
             joint_values: A list of desired joint angles (in radians) for each joint of the arm.
         """
@@ -899,8 +899,8 @@ class Bestman_sim(ABC):
                     joint_id, 
                     p.POSITION_CONTROL, 
                     joint_values[i],
-                    force=self.arm_maxForce[i],
-                    maxVelocity=self.arm_maxVelocity[i]
+                    # force=self.arm_maxForce[i],
+                    # maxVelocity=self.arm_maxVelocity[i]
                 )
         else:
             p.setJointMotorControlArray(
@@ -908,8 +908,6 @@ class Bestman_sim(ABC):
                 jointIndices=self.arm_controllable_joints,
                 controlMode=p.POSITION_CONTROL,
                 targetPositions=joint_values,
-                forces=self.arm_maxForce,
-                targetVelocities=self.arm_maxVelocity,
                 physicsClientId=self.client_id,
             )
 

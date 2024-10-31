@@ -135,7 +135,6 @@ class Bestman_sim_ur5e_robotiq_2f85(Bestman_sim):
             pitch = p.readUserDebugParameter(self.interact_params["pitch"])
             yaw = p.readUserDebugParameter(self.interact_params["yaw"])
             gripper_opening_width = p.readUserDebugParameter(self.interact_params["gripper_open_width"])
-            print(Pose([x, y, z], [roll, pitch, yaw]))
             self.sim_move_eef_to_goal_pose(Pose([x, y, z], [roll, pitch, yaw]))
             self.sim_move_gripper(gripper_opening_width)
             self.client.run(120)
