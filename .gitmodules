@@ -2,3 +2,7 @@
 	path = Asset/Scene/URDF_models
     url = https://github.com/yding25/URDF_models.git
     branch = main
+
+[submodule "Robot"]
+	path = Asset/Robot
+	url = https://github.com/starry521/Robot
