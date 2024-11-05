@@ -19,6 +19,7 @@ import numpy as np
 from lang_sam import LangSAM
 from PIL import Image, ImageDraw
 import pickle
+from Utils import *
 from utils import draw_rectangle
 
 
@@ -177,11 +178,12 @@ if __name__ == "__main__":
     # set work dir to Lang-SAM
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
     
-    input = pickle.loads(sys.stdin.buffer.read())
-    image = pickle.loads(input["input_img"])
-    query=input["query"]
-    box_filename = input["box_filename"]
-    mask_filename = input["mask_filename"]
+    input = Submodule()
+    input.deserialize(sys.stdin.buffer.read())
+    image = input.get("input_img", Image.Image)
+    query = input.get("query")
+    box_filename = input.get("box_filename")
+    mask_filename = input.get("mask_filename")
     
     lang_sam = Lang_SAM()
 
@@ -199,5 +201,7 @@ if __name__ == "__main__":
         mask_filename=mask_filename,
     )
     
-    output = {"seg_mask": seg_mask.tolist(), "bbox": bbox.tolist()}
-    sys.stdout.buffer.write(pickle.dumps(output))
+    input.clear()
+    input.add("seg_mask", seg_mask)
+    input.add("bbox", bbox)
+    sys.stdout.buffer.write(input.serialize())

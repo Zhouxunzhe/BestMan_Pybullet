@@ -1,5 +1,5 @@
-from .subprogress import submodule_call
+from .subprogress import Submodule
 
 __all__ = [
-    "submodule_call"
+    "Submodule"
 ]

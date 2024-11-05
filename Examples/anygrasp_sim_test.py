@@ -53,13 +53,25 @@ def main():
     
     # Lang SAM object segment
     query = str(input("[Lang_SAM] \033[34mInfo: Enter a Object name in the image: \033[0m"))
-    input_dict = {"query": query, "input_img": pickle.dumps(bestman.camera.image), "box_filename": "./output/sim_test/box.png", "mask_filename": "./output/sim_test/mask.png"}
-    output = submodule_call('lang-segment-anything', 'Perception/Object_detection/Lang_SAM/Lang_SAM.py', input_dict)
-    seg_mask, bbox = np.array(output["seg_mask"]), output["bbox"]
+    lang_sam = Submodule()
+    lang_sam.add("query", query)
+    lang_sam.add("input_img", bestman.camera.image)
+    lang_sam.add("box_filename", "./output/sim_test/box.png")
+    lang_sam.add("mask_filename", "./output/sim_test/mask.png")
+    lang_sam.call('lang-segment-anything', 'Perception/Object_detection/Lang_SAM/Lang_SAM.py')
+    seg_mask = lang_sam.get("seg_mask", np.ndarray)
+    bbox = lang_sam.get("bbox", np.ndarray)
 
-    # AnyGrasp pose
+    # # AnyGrasp pose
+    # input = {"anygrasp_cfg": pickle.dumps(cfg.Grasp_Pose_Estimation.AnyGrasp.to_dict()), "camera_cfg": pickle.dumps(cfg.Camera.to_dict()), "seg_mask": seg_mask.to_list(), "bbox": bbox.to_list()}
+    # output = submodule_call('anygrasp', 'Perception/Grasp_Pose_Estimation/AnyGrasp/Anygrasp.py', input)
+    
     # anygrasp = Anygrasp(cfg.Grasp_Pose_Estimation.AnyGrasp)
+    # print(type(cfg.Grasp_Pose_Estimation.AnyGrasp))
+    # print(cfg.Grasp_Pose_Estimation.AnyGrasp)
     # best_pose = anygrasp.Grasp_Pose_Estimation(bestman.camera, seg_mask, bbox)
+    # print(type(best_pose))
+    # print(best_pose)
     # best_pose = bestman.sim_trans_camera_to_world(best_pose)
     # best_pose = bestman.align_grasp_pose_to_tcp([0, 0, -1], best_pose)
     # visualizer.draw_pose(best_pose)
