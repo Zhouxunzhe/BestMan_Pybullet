@@ -9,7 +9,7 @@
 """
 
 import os
-
+import sys
 os.environ["HF_ENDPOINT"] = "https://hf-mirror.com"
 import copy
 from typing import List, Tuple, Type
@@ -18,8 +18,8 @@ import cv2
 import numpy as np
 from lang_sam import LangSAM
 from PIL import Image, ImageDraw
-
-from .utils import draw_rectangle
+import pickle
+from utils import draw_rectangle
 
 
 class Lang_SAM:
@@ -51,16 +51,19 @@ class Lang_SAM:
             box_filename (str, optional): Optional parameter specifying the filename to save the visualization of bounding boxes. Defaults to None.
             save_mask (bool, optional): Optional parameter indicating whether to save masks. Defaults to False.
             mask_filename (str, optional): Optional parameter specifying the filename to save the visualization of masks. Defaults to None.
-
+        
         Returns:
             Tuple[np.ndarray, List[int]]: The segmentation mask and the bounding box coordinates of the detected object in the input image.
         """
 
-        masks, boxes, phrases, logits = self.model.predict(image, text)
+        predict_result = self.model.predict([image], [text])[0]
+        masks = predict_result["masks"]
+        boxes = predict_result["boxes"]
+        
         if len(masks) == 0:
             return masks, None
 
-        seg_mask = np.array(masks[0])
+        seg_mask = np.array(masks[0], dtype=bool)
         bbox = np.array(boxes[0], dtype=int)
 
         if save_box:
@@ -173,13 +176,18 @@ if __name__ == "__main__":
 
     # set work dir to Lang-SAM
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
-
+    
+    input = pickle.loads(sys.stdin.buffer.read())
+    image = pickle.loads(input["input_img"])
+    query=input["query"]
+    box_filename = input["box_filename"]
+    mask_filename = input["mask_filename"]
+    
     lang_sam = Lang_SAM()
 
-    image = Image.open(f"./test_image/test_rgb.jpg")
-    query = str(input("Enter a Object name in the image: "))
-    box_filename = f"./output/object_box.jpg"
-    mask_filename = f"./output/object_mask.jpg"
+    # image = Image.open(f"./test_image/test_rgb.jpg")
+    # box_filename = f"./output/object_box.jpg"
+    # mask_filename = f"./output/object_mask.jpg"
 
     # Object Segmentaion Mask
     seg_mask, bbox = lang_sam.detect_obj(
@@ -190,3 +198,6 @@ if __name__ == "__main__":
         box_filename=box_filename,
         mask_filename=mask_filename,
     )
+    
+    output = {"seg_mask": seg_mask.tolist(), "bbox": bbox.tolist()}
+    sys.stdout.buffer.write(pickle.dumps(output))

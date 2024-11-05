@@ -26,7 +26,7 @@ from PIL import Image
 
 from Perception.Object_detection import Lang_SAM
 from Robotics_API import Pose
-from Visualization import Camera
+from Sensor import Camera
 
 from .utils import Bbox, draw_rectangle, sample_points, visualize_cloud_geometries
 
