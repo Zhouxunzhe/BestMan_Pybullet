@@ -1,6 +1,6 @@
 # Installation
 
-## Install with conda(Linux)
+## Install with conda (Linux)
 
 1. Pull the repository and update the submodule
 
