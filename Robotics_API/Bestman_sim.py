@@ -1195,8 +1195,8 @@ class Bestman_sim(ABC):
     ):
         return self.camera.sim_get_depth_image(enable_show, enable_save, filename)
 
-    def sim_get_camera_3d_points(self, enable_show=False):
-        return self.camera.sim_get_3d_points(enable_show)
+    def sim_get_camera_3d_points(self):
+        return self.camera.sim_get_3d_points()
 
     def sim_visualize_camera_3d_points(self):
         self.camera.sim_visualize_3d_points()

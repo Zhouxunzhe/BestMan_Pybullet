@@ -52,7 +52,9 @@ Camera:
   nearVal: 0.01       # Camera near viewing distance
   farVal: 20          # Camera far viewing distance
   head_tilt: -0.45
-
+  min_depth: 0.0      # Minimum depth of point cloud
+  max_depth: 1.0      # Maximum depth of point cloud
+  
 
 Grasp_Pose_Estimation:
   AnyGrasp:
@@ -60,8 +62,6 @@ Grasp_Pose_Estimation:
     max_gripper_width: 0.08  # Maximum gripper width
     gripper_height: 0.03   # Gripper height
     debug: True # Enable visualization
-    min_depth: 0.0  # Minimum depth of point cloud
-    max_depth: 1.0  # Maximum depth of point cloud
     sampling_rate: 1.0  # Sampling rate of points [<= 1]
     top_down_grasp: true  # top_down_grasp
     output_dir: "./output/sim_test"

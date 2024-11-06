@@ -9,7 +9,6 @@
 """
 
 import os
-import sys
 os.environ["HF_ENDPOINT"] = "https://hf-mirror.com"
 import copy
 from typing import List, Tuple, Type
@@ -18,7 +17,6 @@ import cv2
 import numpy as np
 from lang_sam import LangSAM
 from PIL import Image, ImageDraw
-import pickle
 from Utils import *
 from utils import draw_rectangle
 
@@ -179,17 +177,14 @@ if __name__ == "__main__":
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
     
     input = Submodule()
-    input.deserialize(sys.stdin.buffer.read())
+    pkl_file = os.path.abspath('./data.pkl')
+    input.deserialize(pkl_file)
     image = input.get("input_img", Image.Image)
     query = input.get("query")
     box_filename = input.get("box_filename")
     mask_filename = input.get("mask_filename")
     
     lang_sam = Lang_SAM()
-
-    # image = Image.open(f"./test_image/test_rgb.jpg")
-    # box_filename = f"./output/object_box.jpg"
-    # mask_filename = f"./output/object_mask.jpg"
 
     # Object Segmentaion Mask
     seg_mask, bbox = lang_sam.detect_obj(
@@ -204,4 +199,9 @@ if __name__ == "__main__":
     input.clear()
     input.add("seg_mask", seg_mask)
     input.add("bbox", bbox)
-    sys.stdout.buffer.write(input.serialize())
+    input.serialize(pkl_file)
+    
+    # For test
+    # image = Image.open(f"./test_image/test_rgb.jpg")
+    # box_filename = f"./output/object_box.jpg"
+    # mask_filename = f"./output/object_mask.jpg

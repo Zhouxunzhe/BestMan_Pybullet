@@ -15,8 +15,8 @@ import pickle
 from Config import load_config
 from Env import Client
 from Motion_Planning.Manipulation.OMPL_Planner import OMPL_Planner
-from Perception.Grasp_Pose_Estimation import Anygrasp
-from Perception.Object_detection import Lang_SAM
+# from Perception.Grasp_Pose_Estimation import Anygrasp
+# from Perception.Object_detection import Lang_SAM
 from Robotics_API import Bestman_sim_panda_with_gripper, Pose
 from Visualization import Visualizer
 from Utils import *
@@ -61,10 +61,20 @@ def main():
     lang_sam.call('lang-segment-anything', 'Perception/Object_detection/Lang_SAM/Lang_SAM.py')
     seg_mask = lang_sam.get("seg_mask", np.ndarray)
     bbox = lang_sam.get("bbox", np.ndarray)
-
-    # # AnyGrasp pose
-    # input = {"anygrasp_cfg": pickle.dumps(cfg.Grasp_Pose_Estimation.AnyGrasp.to_dict()), "camera_cfg": pickle.dumps(cfg.Camera.to_dict()), "seg_mask": seg_mask.to_list(), "bbox": bbox.to_list()}
-    # output = submodule_call('anygrasp', 'Perception/Grasp_Pose_Estimation/AnyGrasp/Anygrasp.py', input)
+    
+    # AnyGrasp pose estimation
+    points, colors = bestman.sim_get_camera_3d_points()
+    anygrasp = Submodule()
+    anygrasp.add("anygrasp_cfg", cfg.Grasp_Pose_Estimation.AnyGrasp)
+    anygrasp.add("camera_cfg", cfg.Camera)
+    anygrasp.add("points", points)
+    anygrasp.add("image", bestman.camera.image)
+    anygrasp.add("colors", colors)
+    anygrasp.add("seg_mask", seg_mask)
+    anygrasp.add("bbox", bbox)
+    anygrasp.call('anygrasp', 'Perception/Grasp_Pose_Estimation/AnyGrasp/Anygrasp.py')
+    best_pose = anygrasp.get("best_pose")
+    print(best_pose)
     
     # anygrasp = Anygrasp(cfg.Grasp_Pose_Estimation.AnyGrasp)
     # print(type(cfg.Grasp_Pose_Estimation.AnyGrasp))
@@ -76,17 +86,17 @@ def main():
     # best_pose = bestman.align_grasp_pose_to_tcp([0, 0, -1], best_pose)
     # visualizer.draw_pose(best_pose)
 
-    # # Init ompl
-    # # ompl_planner = OMPL_Planner(bestman, cfg.Planner)
-    # # goal = ompl_planner.set_target_pose(best_pose)
-    # # ompl_planner.remove_obstacle("banana")
-    # # start = bestman.get_current_joint_values()
-    # # path = ompl_planner.plan(start, goal)
-    # # bestman.execute_trajectory(path, enable_plot=True)
+    # Init ompl
+    # ompl_planner = OMPL_Planner(bestman, cfg.Planner)
+    # goal = ompl_planner.set_target_pose(best_pose)
+    # ompl_planner.remove_obstacle("banana")
+    # start = bestman.get_current_joint_values()
+    # path = ompl_planner.plan(start, goal)
+    # bestman.execute_trajectory(path, enable_plot=True)
 
-    # # bestman.sim_open_gripper()
-    # # bestman.sim_move_eef_to_goal_pose(best_pose, 50)
-    # # visualizer.draw_link_pose(bestman.sim_get_arm_id(), bestman.sim_get_eef_link())
+    # bestman.sim_open_gripper()
+    # bestman.sim_move_eef_to_goal_pose(best_pose, 50)
+    # visualizer.draw_link_pose(bestman.sim_get_arm_id(), bestman.sim_get_eef_link())
     # bestman.pick(best_pose)
     # tmp_position = best_pose.get_position()
     # tmp_pose = Pose(
