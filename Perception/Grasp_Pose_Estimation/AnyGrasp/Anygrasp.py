@@ -8,19 +8,21 @@
 # @Description:   : AnyGrasp: Grasp pose estimation algorithm
 """
 
-import os
-from yacs.config import CfgNode as CN
 # sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import copy
+import os
+
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 from graspnetAPI import GraspGroup
 from gsnet import AnyGrasp
 from PIL import Image
+from utils import *
+from yacs.config import CfgNode as CN
+
 # from Robotics_API import Pose
 from Utils import *
-from utils import *
 
 
 class Anygrasp:
@@ -44,14 +46,15 @@ class Anygrasp:
             os.path.dirname(os.path.abspath(__file__)), self.anygrasp_cfg.output_dir
         )
         self.anygrasp_cfg.checkpoint_path = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)), self.anygrasp_cfg.checkpoint_path
+            os.path.dirname(os.path.abspath(__file__)),
+            self.anygrasp_cfg.checkpoint_path,
         )
         self.grasping_model = AnyGrasp(self.anygrasp_cfg)
         self.grasping_model.load_net()
 
     def Grasp_Pose_Estimation(
         self,
-        points: np.ndarray, 
+        points: np.ndarray,
         image: Image.Image,
         colors: np.ndarray,
         seg_mask: np.ndarray,
@@ -71,7 +74,7 @@ class Anygrasp:
         Returns:
             Pose: The best grasp pose of object in scene.
         """
-        
+
         # If the sampling rate is less than 1, the point cloud is downsampled
         if self.anygrasp_cfg.sampling_rate < 1:
             points, indices = sample_points(points, self.anygrasp_cfg.sampling_rate)
@@ -85,7 +88,7 @@ class Anygrasp:
         zmin = points[:, 2].min()
         zmax = points[:, 2].max()
         lims = [xmin, xmax, ymin, ymax, zmin, zmax]
-        
+
         # Grasp prediction, return grasp group and point cloud
         gg, cloud = self.grasping_model.get_grasp(
             points,
@@ -126,7 +129,7 @@ class Anygrasp:
         # Reference direction vector, indicating the ideal grasping direction.
         # ref_vec = np.array([0, math.cos(self.camera_cfg.head_tilt), -math.sin(self.camera_cfg.head_tilt)])
         ref_vec = np.array([0, 0, 1])
-        
+
         # visualize the grip points associated with the given object
         image = copy.deepcopy(image)
         img_drw = draw_rectangle(image, bbox)
@@ -141,14 +144,20 @@ class Anygrasp:
                 0,
                 min(
                     self.camera_cfg.width - 1,
-                    int(((grasp_center[0] * self.camera_cfg.fx) / grasp_center[2]) + self.camera_cfg.cx),
+                    int(
+                        ((grasp_center[0] * self.camera_cfg.fx) / grasp_center[2])
+                        + self.camera_cfg.cx
+                    ),
                 ),
             )
             iy = max(
                 0,
                 min(
                     self.camera_cfg.height - 1,
-                    int(((-grasp_center[1] * self.camera_cfg.fy) / grasp_center[2]) + self.camera_cfg.cy),
+                    int(
+                        ((-grasp_center[1] * self.camera_cfg.fy) / grasp_center[2])
+                        + self.camera_cfg.cy
+                    ),
                 ),
             )
 
@@ -232,14 +241,14 @@ class Anygrasp:
 
 
 if __name__ == "__main__":
-    
+
     # set work dir to AnyGrasp
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
-    
+
     input = Submodule()
-    pkl_file = os.path.abspath('./data.pkl')
+    pkl_file = os.path.abspath("./data.pkl")
     input.deserialize(pkl_file)
-    
+
     anygrasp_cfg = input.get("anygrasp_cfg", CN)
     camera_cfg = input.get("camera_cfg", CN)
     points = input.get("points", np.ndarray).astype(np.float32)
@@ -247,10 +256,10 @@ if __name__ == "__main__":
     colors = input.get("colors", np.ndarray).astype(np.float32)
     seg_mask = input.get("seg_mask", np.ndarray)
     bbox = input.get("bbox", np.ndarray)
-    
+
     anygrasp = Anygrasp(anygrasp_cfg, camera_cfg)
     best_pose = anygrasp.Grasp_Pose_Estimation(points, image, colors, seg_mask, bbox)
-    
+
     input.clear()
     input.add("best_pose", best_pose)
     input.serialize(pkl_file)

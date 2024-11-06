@@ -36,7 +36,7 @@ class Bestman_sim_elephant_with_gripper(Bestman_sim):
 
         # Init parent class: BestMan_sim
         super().__init__(client, visualizer, cfg)
-        
+
         # change robot color
         self.visualizer.set_object_color(self.base_id, "light_white")
 

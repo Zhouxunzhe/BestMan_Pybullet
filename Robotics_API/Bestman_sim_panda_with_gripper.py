@@ -36,7 +36,7 @@ class Bestman_sim_panda_with_gripper(Bestman_sim):
 
         # Init parent class: BestMan_sim
         super().__init__(client, visualizer, cfg)
-        
+
         # change robot color
         self.visualizer.change_robot_color(self.base_id, self.arm_id, False)
 
@@ -102,7 +102,7 @@ class Bestman_sim_panda_with_gripper(Bestman_sim):
                 self.arm_id, i, p.POSITION_CONTROL, open_width, force=100
             )
         self.client.run(30)
-    
+
     def sim_interactive_set_gripper(self, duration=20):
         print("[BestMan_Sim][Gripper] \033[34mInfo\033[0m: Interact start!")
         if self.gripper_control is None:
@@ -114,7 +114,7 @@ class Bestman_sim_panda_with_gripper(Bestman_sim):
             target_gripper_width = p.readUserDebugParameter(gripper_control)
             self.sim_move_gripper(target_gripper_width)
         print("[BestMan_Sim][Gripper] \033[34mInfo\033[0m: Interact over!")
-    
+
     def sim_create_gripper_constraint(self, object, link_id):
         object_id = self.client.resolve_object_id(object)
         link_state = p.getLinkState(object_id, link_id)

@@ -33,13 +33,13 @@ def main(filename):
 
     # Init robot
     flexiv = Bestman_sim_flexiv_robotiq_2f85(client, visualizer, cfg)
-    
+
     # Interact with arm
     # flexiv.sim_interactive_control_arm(100)
-    
+
     # interct with eef
     flexiv.sim_interactive_control_eef(100)
-    
+
     # client.wait(10)
 
     # visualizer.capture_screen("flexiv")

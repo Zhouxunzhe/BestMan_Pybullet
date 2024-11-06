@@ -10,6 +10,7 @@
 
 import os
 import time
+
 from Config import load_config
 from Env import Client
 from Motion_Planning.Navigation import *
@@ -28,8 +29,8 @@ def main(filename):
     client = Client(cfg.Client)
     visualizer = Visualizer(client, cfg.Visualizer)
     visualizer.draw_axes()
-    
-    # Start record  
+
+    # Start record
     visualizer.start_record(filename)
 
     # Init robot
@@ -38,7 +39,7 @@ def main(filename):
     # Interact with arm
     # xarm.sim_interactive_control_arm(10)
     xarm.sim_interactive_control_eef(100)
-    
+
     # client.wait(10)
     # visualizer.capture_screen("xarm")
 

@@ -60,7 +60,7 @@ class Camera:
         cfg.fy = self.fy
         cfg.cx = self.cx
         cfg.cy = self.cy
-        
+
         # 3d points
         self.min_depth = cfg.min_depth
         self.max_depth = cfg.max_depth
@@ -127,7 +127,7 @@ class Camera:
         # make sure the array has the correct shape
         rgb = np.array(rgb, dtype=np.uint8).reshape(h, w, 4)[:, :, :3]
         depth = np.array(depth).reshape(h, w)
-        
+
         self.image = Image.fromarray(rgb)
         self.colors = np.array(rgb)  # BGR to RGB
 

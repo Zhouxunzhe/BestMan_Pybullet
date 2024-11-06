@@ -46,7 +46,7 @@ class Bestman_sim_xarm_with_gripper(Bestman_sim):
             jointType=p.JOINT_GEAR,
             jointAxis=[1, 0, 0],
             parentFramePosition=[0, 0, 0],
-            childFramePosition=[0, 0, 0]
+            childFramePosition=[0, 0, 0],
         )
 
         # Modify constraint parameters
@@ -72,7 +72,7 @@ class Bestman_sim_xarm_with_gripper(Bestman_sim):
             base_pose.get_orientation(),
         )
         return arm_pose
-        
+
     # ----------------------------------------------------------------
     # Functions for gripper
     # ----------------------------------------------------------------
@@ -176,15 +176,27 @@ class Bestman_sim_xarm_with_gripper(Bestman_sim):
 
     def sim_interactive_control_eef(self, duration=20):
         print("[BestMan_Sim][Gripper] \033[34mInfo\033[0m: Interact start!")
-        if "x" not in self.interact_params: self.interact_params["x"] = p.addUserDebugParameter("x", -0.224, 0.224, 0)
-        if "y" not in self.interact_params: self.interact_params["y"] = p.addUserDebugParameter("y", -0.224, 0.224, 0)
-        if "z" not in self.interact_params: self.interact_params["z"] = p.addUserDebugParameter("z", 0, 1.0, 0.5)
-        if "roll" not in self.interact_params: self.interact_params["roll"] = p.addUserDebugParameter("roll", -math.pi, math.pi, 0)
-        if "pitch" not in self.interact_params: self.interact_params["pitch"] = p.addUserDebugParameter("pitch", -math.pi, 2* math.pi, math.pi)
-        if "yaw" not in self.interact_params: self.interact_params["yaw"] = p.addUserDebugParameter("yaw", -math.pi, math.pi, 0)
+        if "x" not in self.interact_params:
+            self.interact_params["x"] = p.addUserDebugParameter("x", -0.224, 0.224, 0)
+        if "y" not in self.interact_params:
+            self.interact_params["y"] = p.addUserDebugParameter("y", -0.224, 0.224, 0)
+        if "z" not in self.interact_params:
+            self.interact_params["z"] = p.addUserDebugParameter("z", 0, 1.0, 0.5)
+        if "roll" not in self.interact_params:
+            self.interact_params["roll"] = p.addUserDebugParameter(
+                "roll", -math.pi, math.pi, 0
+            )
+        if "pitch" not in self.interact_params:
+            self.interact_params["pitch"] = p.addUserDebugParameter(
+                "pitch", -math.pi, 2 * math.pi, math.pi
+            )
+        if "yaw" not in self.interact_params:
+            self.interact_params["yaw"] = p.addUserDebugParameter(
+                "yaw", -math.pi, math.pi, 0
+            )
         # if "gripper_open_width" not in self.interact_params: self.interact_params["gripper_open_width"] = p.addUserDebugParameter("gripper_open_width", self.gripper_range[0], self.gripper_range[1], 0)
         # last_params = [0, 0, 0, 0, math.pi, 0]
-        
+
         start_time = time.time()
         while time.time() - start_time < duration:
             x = p.readUserDebugParameter(self.interact_params["x"])
@@ -203,12 +215,26 @@ class Bestman_sim_xarm_with_gripper(Bestman_sim):
             # self.sim_move_gripper(gripper_opening_width)
             pos = (x, y, z)
             orn = p.getQuaternionFromEuler((roll, pitch, yaw))
-            joint_poses = p.calculateInverseKinematics(self.arm_id, self.eef_id, pos, orn,
-                                                       self.arm_lowerLimit, self.arm_upperLimit, self.arm_jointRange, self.arm_reset_jointValues,
-                                                       maxNumIterations=20)
+            joint_poses = p.calculateInverseKinematics(
+                self.arm_id,
+                self.eef_id,
+                pos,
+                orn,
+                self.arm_lowerLimit,
+                self.arm_upperLimit,
+                self.arm_jointRange,
+                self.arm_reset_jointValues,
+                maxNumIterations=20,
+            )
             for i, joint_id in enumerate(self.arm_joints_idx):
-                p.setJointMotorControl2(self.arm_id, joint_id, p.POSITION_CONTROL, joint_poses[i],
-                                        force=self.arm_jointInfo[joint_id].maxForce, maxVelocity=self.arm_jointInfo[joint_id].maxVelocity)
+                p.setJointMotorControl2(
+                    self.arm_id,
+                    joint_id,
+                    p.POSITION_CONTROL,
+                    joint_poses[i],
+                    force=self.arm_jointInfo[joint_id].maxForce,
+                    maxVelocity=self.arm_jointInfo[joint_id].maxVelocity,
+                )
             self.client.run(120)
         print("[BestMan_Sim][Gripper] \033[34mInfo\033[0m: Interact over!")
 

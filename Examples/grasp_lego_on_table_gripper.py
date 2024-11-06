@@ -48,11 +48,7 @@ def main(filename):
     )
 
     lego_id = client.load_object(
-        "lego",
-        "lego/lego.urdf",
-        [0.6, 0.6, 0.85],
-        [0.0, 0.0, 0.0],
-        1.0
+        "lego", "lego/lego.urdf", [0.6, 0.6, 0.85], [0.0, 0.0, 0.0], 1.0
     )
 
     # grasp target object

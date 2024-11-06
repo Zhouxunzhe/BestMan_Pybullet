@@ -22,7 +22,7 @@ from Visualization import Visualizer
 
 
 def main(filename):
-    
+
     # Load config
     config_path = "Config/move_bowl_from_drawer_to_table.yaml"
     cfg = load_config(config_path)
@@ -92,7 +92,7 @@ def main(filename):
 
     # Robot execute, Reach object
     bestman.sim_execute_trajectory(path, enable_plot=True)
-    
+
     # grasp target object
     bestman.sim_open_vacuum_gripper("bowl")
 
@@ -103,11 +103,11 @@ def main(filename):
     standing_pose2 = Pose([1.0, 2, 0], [0.0, 0.0, -math.pi / 2])
     path = nav_planner.plan(bestman.sim_get_current_base_pose(), standing_pose2)
     bestman.sim_navigate_base(standing_pose2, path, enable_plot=True)
-    
+
     # Move arm to table
     place_pose = Pose([1.0, 1.0, 1.0], [0.0, math.pi / 2.0, 0.0])
     bestman.sim_move_eef_to_goal_pose(place_pose)
-    
+
     # place the bowl
     bestman.sim_close_vacuum_gripper()
 

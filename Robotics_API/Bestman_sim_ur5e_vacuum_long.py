@@ -32,7 +32,7 @@ class Bestman_sim_ur5e_vacuum_long(Bestman_sim):
             cfg (dict): Configuration settings.
         """
         super().__init__(client, visualizer, cfg)
-        
+
         # change robot color
         self.visualizer.change_robot_color(self.base_id, self.arm_id, False)
 

@@ -95,7 +95,7 @@ class Bestman_sim(ABC):
         self.tcp_link = self.robot_cfg.tcp_link
         self.tcp_height = self.robot_cfg.tcp_height
         self.arm_reset_jointValues = self.robot_cfg.arm_reset_jointValues
-        
+
         arm_pose = self.sim_get_sync_arm_pose()
         self.base_init_pose = Pose(
             self.robot_cfg.base_init_pose[:3], self.robot_cfg.base_init_pose[3:]
@@ -108,7 +108,7 @@ class Bestman_sim(ABC):
             fixed_base=True,
         )
         self.arm_joint_info = self.sim_get_arm_jointInfo()
-        
+
         # Add constraint between base and arm
         p.createConstraint(
             parentBodyUniqueId=self.base_id,
@@ -122,7 +122,7 @@ class Bestman_sim(ABC):
             physicsClientId=self.client_id,
         )
         self.sim_sync_arm_pose()
-        
+
         # Init arm joint angle
         self.sim_reset_arm_to_joint_values(self.arm_reset_jointValues)
 
@@ -135,7 +135,7 @@ class Bestman_sim(ABC):
 
         # Parameters for interactivate control
         self.interact_params = {}
-        
+
     # ----------------------------------------------------------------
     # functions for base
     # ----------------------------------------------------------------
@@ -152,7 +152,7 @@ class Bestman_sim(ABC):
     def sim_get_current_base_pose(self):
         """
         Retrieves the current position and orientation of the robot base.
-        
+
         Returns:
             Pose: A Pose object representing the current pose of the base.
                   The pose contains the position as a list [x, y, z] and the orientation as a list [roll, pitch, yaw].
@@ -702,19 +702,19 @@ class Bestman_sim(ABC):
                 "upperLimit",
                 "maxForce",
                 "maxVelocity",
-                "controllable"
+                "controllable",
             ],
         )
-        
+
         joint_type_dict = {
             p.JOINT_REVOLUTE: "Revolute",
             p.JOINT_PRISMATIC: "Prismatic",
             p.JOINT_SPHERICAL: "Spherical",
             p.JOINT_PLANAR: "Planar",
             p.JOINT_FIXED: "Fixed",
-            p.JOINT_GEAR: "Gear"
+            p.JOINT_GEAR: "Gear",
         }
-        
+
         self.arm_jointInfo = []
         self.controllable_joints = []
         for i in range(p.getNumJoints(self.arm_id)):
@@ -722,14 +722,14 @@ class Bestman_sim(ABC):
             jointID = info[0]
             jointName = info[1].decode("utf-8")
             # JOINT_REVOLUTE, JOINT_PRISMATIC, JOINT_SPHERICAL, JOINT_PLANAR, JOINT_FIXED, JOINT_GEAR
-            jointType = joint_type_dict.get(info[2], "Unknown Joint Type") 
+            jointType = joint_type_dict.get(info[2], "Unknown Joint Type")
             jointDamping = info[6]
             jointFriction = info[7]
             jointLowerLimit = info[8]
             jointUpperLimit = info[9]
             jointMaxForce = info[10]
             jointMaxVelocity = info[11]
-            controllable = (jointType != "Fixed")
+            controllable = jointType != "Fixed"
             if controllable:
                 self.controllable_joints.append(jointID)
             info = jointInfo(
@@ -742,17 +742,37 @@ class Bestman_sim(ABC):
                 jointUpperLimit,
                 jointMaxForce,
                 jointMaxVelocity,
-                controllable
+                controllable,
             )
             self.arm_jointInfo.append(info)
-        
+
         assert len(self.controllable_joints) >= self.arm_num_dofs
-        self.arm_controllable_joints = self.controllable_joints[:self.arm_num_dofs]
-        self.arm_lowerLimit = [info.lowerLimit for info in self.arm_jointInfo if info.id in self.arm_controllable_joints]
-        self.arm_upperLimit = [info.upperLimit for info in self.arm_jointInfo if info.id in self.arm_controllable_joints]
-        self.arm_jointRange = [info.upperLimit - info.lowerLimit for info in self.arm_jointInfo if info.id in self.arm_controllable_joints]
-        self.arm_maxForce = [info.maxForce for info in self.arm_jointInfo if info.id in self.arm_controllable_joints]
-        self.arm_maxVelocity = [info.maxVelocity for info in self.arm_jointInfo if info.id in self.arm_controllable_joints]
+        self.arm_controllable_joints = self.controllable_joints[: self.arm_num_dofs]
+        self.arm_lowerLimit = [
+            info.lowerLimit
+            for info in self.arm_jointInfo
+            if info.id in self.arm_controllable_joints
+        ]
+        self.arm_upperLimit = [
+            info.upperLimit
+            for info in self.arm_jointInfo
+            if info.id in self.arm_controllable_joints
+        ]
+        self.arm_jointRange = [
+            info.upperLimit - info.lowerLimit
+            for info in self.arm_jointInfo
+            if info.id in self.arm_controllable_joints
+        ]
+        self.arm_maxForce = [
+            info.maxForce
+            for info in self.arm_jointInfo
+            if info.id in self.arm_controllable_joints
+        ]
+        self.arm_maxVelocity = [
+            info.maxVelocity
+            for info in self.arm_jointInfo
+            if info.id in self.arm_controllable_joints
+        ]
         return self.arm_jointInfo
 
     def sim_print_arm_jointInfo(self):
@@ -782,7 +802,9 @@ class Bestman_sim(ABC):
             list: A list of tuples representing the joint bounds, where each tuple contains the minimum and maximum values for a joint.
         """
         joint_bounds = [
-            [info.lowerLimit, info.upperLimit] for info in self.arm_jointInfo if info.id in self.arm_controllable_joints
+            [info.lowerLimit, info.upperLimit]
+            for info in self.arm_jointInfo
+            if info.id in self.arm_controllable_joints
         ]
         return joint_bounds
 
@@ -868,13 +890,16 @@ class Bestman_sim(ABC):
         """
         print("[BestMan_Sim][Arm] \033[34mInfo\033[0m: Interact start!")
         for info in self.arm_jointInfo:
-            if info.id in self.arm_controllable_joints and info.name not in self.interact_params:
+            if (
+                info.id in self.arm_controllable_joints
+                and info.name not in self.interact_params
+            ):
                 self.interact_params[info.id] = p.addUserDebugParameter(
-                        info.name,
-                        info.lowerLimit,
-                        info.upperLimit,
-                        p.getJointState(self.arm_id, info.id)[0],
-                    )
+                    info.name,
+                    info.lowerLimit,
+                    info.upperLimit,
+                    p.getJointState(self.arm_id, info.id)[0],
+                )
         start_time = time.time()
         while time.time() - start_time < duration:
             target_joint_position = [
@@ -883,21 +908,21 @@ class Bestman_sim(ABC):
             ]
             self.sim_move_arm_to_joint_values(target_joint_position)
         print("[BestMan_Sim][Arm] \033[34mInfo\033[0m: Interact over!")
-    
+
     def sim_move_arm_to_joint_values(self, joint_values, single=True):
         """
         Move arm to move to a specific set of joint angles, with considering physics
-        
+
         Args:
             joint_values: A list of desired joint angles (in radians) for each joint of the arm.
         """
 
-        if single: 
+        if single:
             for i, joint_id in enumerate(self.arm_controllable_joints):
                 p.setJointMotorControl2(
-                    self.arm_id, 
-                    joint_id, 
-                    p.POSITION_CONTROL, 
+                    self.arm_id,
+                    joint_id,
+                    p.POSITION_CONTROL,
                     joint_values[i],
                     # force=self.arm_maxForce[i],
                     # maxVelocity=self.arm_maxVelocity[i]
@@ -934,7 +959,6 @@ class Bestman_sim(ABC):
         #         # print("-" * 20 + "\n" + "Timeout before reaching target joint position.")
         #         break
 
-
     def sim_joints_to_cartesian(self, joint_values):
         """
         Transforms the robot arm's joint angles to its Cartesian coordinates.
@@ -962,7 +986,7 @@ class Bestman_sim(ABC):
     def sim_cartesian_to_joints(self, pose, max_iterations=20, threshold=1e-4):
         """
         Transforms the robot arm's Cartesian coordinates to its joint angles.
-        
+
         Args:
             position (list): The Cartesian position of the robot arm.
             orientation (list): The Cartesian orientation of the robot arm.
@@ -981,7 +1005,7 @@ class Bestman_sim(ABC):
             restPoses=self.arm_reset_jointValues,
             maxNumIterations=max_iterations,
             residualThreshold=threshold,
-        )[:self.arm_num_dofs]
+        )[: self.arm_num_dofs]
         return joint_values
 
     def sim_rotate_eef(self, angle):
@@ -1025,9 +1049,7 @@ class Bestman_sim(ABC):
 
         print("[BestMan_Sim][Arm] \033[34mInfo\033[0m: Rotate end effector completed!")
 
-    def sim_move_eef_to_goal_pose(
-        self, eef_goal_pose, steps=10, threshold=0.2
-    ):
+    def sim_move_eef_to_goal_pose(self, eef_goal_pose, steps=10, threshold=0.2):
         """
         Move arm's end effector to a target position.
 
@@ -1112,8 +1134,7 @@ class Bestman_sim(ABC):
 
         eef_pose = self.sim_get_current_eef_pose()
         distance = np.linalg.norm(
-            np.array(eef_pose.get_position())
-            - np.array(goal_pose.get_position())
+            np.array(eef_pose.get_position()) - np.array(goal_pose.get_position())
         )
         return distance
 

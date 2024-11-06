@@ -31,7 +31,7 @@ def main(filename):
     client = Client(cfg.Client)
     visualizer = Visualizer(client, cfg.Visualizer)
     visualizer.draw_axes()
-    
+
     # Start record
     visualizer.start_record(filename)
 

@@ -54,7 +54,7 @@ class AStarPlanner:
         """
 
         self.path = None
-        
+
         # only care about x, y
         self.start_position = start_pose.get_position()[0:2]
         self.goal_position = goal_pose.get_position()[0:2]

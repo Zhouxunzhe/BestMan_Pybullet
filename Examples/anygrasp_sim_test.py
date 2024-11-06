@@ -8,18 +8,22 @@
 # @Description:   : A example to load kitchen
 """
 
-import numpy as np
 import math
 import os
 import pickle
+
+import numpy as np
+
 from Config import load_config
 from Env import Client
 from Motion_Planning.Manipulation.OMPL_Planner import OMPL_Planner
+
 # from Perception.Grasp_Pose_Estimation import Anygrasp
 # from Perception.Object_detection import Lang_SAM
 from Robotics_API import Bestman_sim_panda_with_gripper, Pose
-from Visualization import Visualizer
 from Utils import *
+from Visualization import Visualizer
+
 
 def main():
 
@@ -50,18 +54,22 @@ def main():
     # debug, look for camera pose
     camera_pose = bestman.sim_get_camera_pose()
     visualizer.draw_pose(camera_pose)
-    
+
     # Lang SAM object segment
-    query = str(input("[Lang_SAM] \033[34mInfo: Enter a Object name in the image: \033[0m"))
+    query = str(
+        input("[Lang_SAM] \033[34mInfo: Enter a Object name in the image: \033[0m")
+    )
     lang_sam = Submodule()
     lang_sam.add("query", query)
     lang_sam.add("input_img", bestman.camera.image)
     lang_sam.add("box_filename", "./output/sim_test/box.png")
     lang_sam.add("mask_filename", "./output/sim_test/mask.png")
-    lang_sam.call('lang-segment-anything', 'Perception/Object_detection/Lang_SAM/Lang_SAM.py')
+    lang_sam.call(
+        "lang-segment-anything", "Perception/Object_detection/Lang_SAM/Lang_SAM.py"
+    )
     seg_mask = lang_sam.get("seg_mask", np.ndarray)
     bbox = lang_sam.get("bbox", np.ndarray)
-    
+
     # AnyGrasp pose estimation
     points, colors = bestman.sim_get_camera_3d_points()
     anygrasp = Submodule()
@@ -72,10 +80,10 @@ def main():
     anygrasp.add("colors", colors)
     anygrasp.add("seg_mask", seg_mask)
     anygrasp.add("bbox", bbox)
-    anygrasp.call('anygrasp', 'Perception/Grasp_Pose_Estimation/AnyGrasp/Anygrasp.py')
+    anygrasp.call("anygrasp", "Perception/Grasp_Pose_Estimation/AnyGrasp/Anygrasp.py")
     best_pose = anygrasp.get("best_pose")
     print(best_pose)
-    
+
     # anygrasp = Anygrasp(cfg.Grasp_Pose_Estimation.AnyGrasp)
     # print(type(cfg.Grasp_Pose_Estimation.AnyGrasp))
     # print(cfg.Grasp_Pose_Estimation.AnyGrasp)

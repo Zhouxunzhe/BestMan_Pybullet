@@ -84,7 +84,9 @@ class FCL_Collision:
         """
         # set arm link pairs
         self.arm_link_pairs = (
-            get_arm_link_pairs(self.arm_id, self.arm_controllable_joints) if self_collisions else []
+            get_arm_link_pairs(self.arm_id, self.arm_controllable_joints)
+            if self_collisions
+            else []
         )
 
         # set arm obstacle pairs

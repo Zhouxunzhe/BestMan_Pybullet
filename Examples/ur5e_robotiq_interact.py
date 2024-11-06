@@ -9,6 +9,7 @@
 """
 
 import os
+
 from Config import load_config
 from Env import Client
 from Motion_Planning.Navigation import *
@@ -27,20 +28,20 @@ def main(filename):
     client = Client(cfg.Client)
     visualizer = Visualizer(client, cfg.Visualizer)
     visualizer.draw_axes()
-    
-    # Start record  
+
+    # Start record
     visualizer.start_record(filename)
-    
+
     # Init robot
     ur5e = Bestman_sim_ur5e_robotiq_2f85(client, visualizer, cfg)
 
     # Interact with arm
     # ur5e.sim_interactive_control_arm(1000)
     ur5e.sim_interactive_control_eef(100)
-    
+
     # client.wait(10)
     # visualizer.capture_screen("ur5e")
-    
+
     # End record
     visualizer.end_record()
 

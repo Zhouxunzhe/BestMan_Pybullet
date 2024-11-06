@@ -9,6 +9,7 @@
 """
 
 import os
+
 os.environ["HF_ENDPOINT"] = "https://hf-mirror.com"
 import copy
 from typing import List, Tuple, Type
@@ -17,8 +18,9 @@ import cv2
 import numpy as np
 from lang_sam import LangSAM
 from PIL import Image, ImageDraw
-from Utils import *
 from utils import draw_rectangle
+
+from Utils import *
 
 
 class Lang_SAM:
@@ -50,7 +52,7 @@ class Lang_SAM:
             box_filename (str, optional): Optional parameter specifying the filename to save the visualization of bounding boxes. Defaults to None.
             save_mask (bool, optional): Optional parameter indicating whether to save masks. Defaults to False.
             mask_filename (str, optional): Optional parameter specifying the filename to save the visualization of masks. Defaults to None.
-        
+
         Returns:
             Tuple[np.ndarray, List[int]]: The segmentation mask and the bounding box coordinates of the detected object in the input image.
         """
@@ -58,7 +60,7 @@ class Lang_SAM:
         predict_result = self.model.predict([image], [text])[0]
         masks = predict_result["masks"]
         boxes = predict_result["boxes"]
-        
+
         if len(masks) == 0:
             return masks, None
 
@@ -175,15 +177,15 @@ if __name__ == "__main__":
 
     # set work dir to Lang-SAM
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
-    
+
     input = Submodule()
-    pkl_file = os.path.abspath('./data.pkl')
+    pkl_file = os.path.abspath("./data.pkl")
     input.deserialize(pkl_file)
     image = input.get("input_img", Image.Image)
     query = input.get("query")
     box_filename = input.get("box_filename")
     mask_filename = input.get("mask_filename")
-    
+
     lang_sam = Lang_SAM()
 
     # Object Segmentaion Mask
@@ -195,12 +197,12 @@ if __name__ == "__main__":
         box_filename=box_filename,
         mask_filename=mask_filename,
     )
-    
+
     input.clear()
     input.add("seg_mask", seg_mask)
     input.add("bbox", bbox)
     input.serialize(pkl_file)
-    
+
     # For test
     # image = Image.open(f"./test_image/test_rgb.jpg")
     # box_filename = f"./output/object_box.jpg"

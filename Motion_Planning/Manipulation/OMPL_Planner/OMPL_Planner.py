@@ -41,7 +41,7 @@ class OMPL_Planner:
         # client info
         self.client = robot.client
         self.client_id = self.client.get_client_id()
-        
+
         # obstacles
         self.target_id = None
         self.collision = Basic_Collision(robot)
@@ -59,7 +59,7 @@ class OMPL_Planner:
         self.ss.setStateValidityChecker(
             ob.StateValidityCheckerFn(self.collision.is_state_valid)
         )
-        
+
         self.si = self.ss.getSpaceInformation()
 
         # planner cfgs
@@ -114,7 +114,7 @@ class OMPL_Planner:
             list: The goal state in joint space.
         """
         self.target_id = self.client.resolve_object_id(target)
-        
+
         # get target object bounds
         min_x, min_y, _, max_x, max_y, max_z = self.client.get_bounding_box(
             self.target_id
@@ -134,7 +134,7 @@ class OMPL_Planner:
         goal = self.robot.sim_cartesian_to_joints(goal_pose)
 
         return goal
-    
+
     def set_target_pose(self, target_pose):
         """
         Set the target pose for the planner.
@@ -142,7 +142,7 @@ class OMPL_Planner:
         Args:
             pose (Pose): The target pose for the planning algorithm. This must include
                         the position and orientation of the target.
-        
+
         Returns:
             bool: True if the target pose was successfully set, False otherwise.
         """

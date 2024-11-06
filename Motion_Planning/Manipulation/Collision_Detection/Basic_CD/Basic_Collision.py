@@ -81,7 +81,9 @@ class Basic_Collision:
         """
         # set arm link pairs
         self.arm_link_pairs = (
-            get_arm_link_pairs(self.arm_id, self.arm_controllable_joints) if self_collisions else []
+            get_arm_link_pairs(self.arm_id, self.arm_controllable_joints)
+            if self_collisions
+            else []
         )
 
         # set arm obstacle pairs
@@ -101,7 +103,7 @@ class Basic_Collision:
             bool: True if the state is valid, False otherwise.
         """
         self.robot.sim_reset_arm_to_joint_values(state)
-        
+
         # check arm self-collision
         if self.check_arm_self_collision():
             return False
