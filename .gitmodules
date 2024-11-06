@@ -13,3 +13,7 @@
 [submodule "third_party"]
 	path = Install/third_party
 	url = https://github.com/starry521/third_party
+
+[submodule "urdformer"]
+	path = DigitalTwin/urdformer
+	url = https://github.com/starry521/urdformer.git
