@@ -17,3 +17,7 @@
 [submodule "urdformer"]
 	path = DigitalTwin/urdformer
 	url = https://github.com/starry521/urdformer.git
+
+[submodule "acdc"]
+	path = DigitalTwin/acdc
+	url = https://github.com/starry521/digital-cousins.git
