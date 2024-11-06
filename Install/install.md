@@ -2,6 +2,8 @@
 
 ## Install with conda (Linux)
 
+### Basic Install
+
 1. Pull the repository and update the submodule
 
 ```
@@ -54,6 +56,16 @@ conda install mamba -n base -c conda-forge
 conda(mamba) env create -f basic_env.yaml
 conda(mamba) activate BestMan
 ```
+
+### Extended install
+
+> In order to prevent conflicts in environment dependencies between different algorithm submodules in each module, we isolate the environments of each algorithm submodule of BestMan from each other for efficient management and calling.
+
+If you want to install and use centain submodule, please see `install.md` in submodule dir. Such as:
+
+- [Lang SAM](Perception/Object_detection/Lang_SAM/install.md)
+- [AnyGrasp](Perception/Grasp_Pose_Estimation/install.md)
+  
 
 ## Install with Docker (Windows)
 
