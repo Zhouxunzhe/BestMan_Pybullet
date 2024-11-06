@@ -44,9 +44,10 @@ pip install -r requirements.txt
     python setup.py install
 ```
 
-- Some package version change
+- Some package version change and install
 ```
 pip install numpy==1.23.5 --force-reinstall
+pip install yacs
 ```
 
 - Other setting
