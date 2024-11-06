@@ -63,8 +63,8 @@ conda(mamba) activate BestMan
 
 If you want to install and use centain submodule, please see `install.md` in submodule dir. Such as:
 
-- [Lang SAM](Perception/Object_detection/Lang_SAM/install.md)
-- [AnyGrasp](Perception/Grasp_Pose_Estimation/install.md)
+- [Lang SAM](../Perception/Grasp_Pose_Estimation/AnyGrasp/install.md)
+- [AnyGrasp](../Perception/Grasp_Pose_Estimation/install.md)
   
 
 ## Install with Docker (Windows)
