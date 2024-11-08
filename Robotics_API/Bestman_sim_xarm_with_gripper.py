@@ -37,27 +37,6 @@ class Bestman_sim_xarm_with_gripper(Bestman_sim):
         # Init parent class: BestMan_sim
         super().__init__(client, visualizer, cfg)
 
-        # Create a gear constraint to keep the fingers symmetrically centered
-        c = p.createConstraint(
-            self.arm_id,
-            9,
-            self.arm_id,
-            12,
-            jointType=p.JOINT_GEAR,
-            jointAxis=[1, 0, 0],
-            parentFramePosition=[0, 0, 0],
-            childFramePosition=[0, 0, 0],
-        )
-
-        # Modify constraint parameters
-        p.changeConstraint(c, gearRatio=-1, erp=0.1, maxForce=1000)
-
-        # gripper range
-        self.gripper_range = [0, 0.05]
-
-        # close gripper
-        self.sim_close_gripper()
-
     # ----------------------------------------------------------------
     # Functions for arm
     # ----------------------------------------------------------------
