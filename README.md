@@ -30,7 +30,6 @@ A mobile manipulator (with a wheel-base and arm) platform built on PyBullet simu
 
 ## 📋 Contents
 
-- [📋 Contents](#-contents)
 - [🔥 News](#-news)
 - [🎯 Framework](#-Framework)
 - [🏠 Getting Started](#-getting-started)
