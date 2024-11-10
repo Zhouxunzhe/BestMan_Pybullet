@@ -4,7 +4,7 @@
 
 ### Basic Install
 
-> *Note: This will only install the basic module. For other algorithm submodules, please follow the instructions [Algorithm Submodule install](#algorithm-submodule-install) to install as needed*
+> ***Note**: This will only install the basic module. For other algorithm submodules, please follow the instructions [Algorithm Submodule install](#algorithm-submodule-install) to install as needed*
 
 1. Pull the repository and update the submodule
 
@@ -61,7 +61,7 @@ conda(mamba) activate BestMan
 
 ### Algorithm Submodule install
 
-> *In order to prevent conflicts in environment dependencies between different algorithm submodules in each module, we isolate the environments of each algorithm submodule of BestMan from each other for efficient management and calling.*
+> ***Note**: In order to prevent conflicts in environment dependencies between different algorithm submodules in each module, we isolate the environments of each algorithm submodule of BestMan from each other for efficient management and calling.*
 
 If you want to install and use centain submodule, please see `install.md` in submodule dir. Such as:
 
@@ -71,7 +71,7 @@ If you want to install and use centain submodule, please see `install.md` in sub
 
 ## Install with Docker (Windows)
 
-> *Note: Docker image does not include submodules such as LangSAM and Anygrasp, only basic installation.*
+> ***Note**: Docker image does not include submodules such as LangSAM and Anygrasp, only basic installation.*
 
 1. Pull BestMan docker image
 
