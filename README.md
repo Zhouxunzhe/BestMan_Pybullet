@@ -55,9 +55,11 @@ A mobile manipulator (with a wheel-base and arm) platform built on PyBullet simu
 ## 🏠 Getting Started
 
 ### Prerequisites
+
+> ***Note**: We recommand Ubuntu 22.04 and python version deault to 3.8.*
+
 - Ubuntu 20.04, 22.04
-- Conda
-  
+- Conda 
   - Python 3.8, 3.9, 3.10
 
 ### Installation
