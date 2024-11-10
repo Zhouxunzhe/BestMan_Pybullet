@@ -4,7 +4,7 @@
 
 ### Basic Install
 
-> ***Note**: This will only install the basic module. For other algorithm submodules, please follow the instructions [Algorithm Submodule install](#algorithm-submodule-install) to install as needed*
+> ***Note**: This will only install the basic module. For other algorithm submodules, please follow the instructions [Algorithm Submodule install](#algorithm-submodule-install) to install as needed.*
 
 1. Pull the repository and update the submodule
 
@@ -54,6 +54,9 @@ conda install mamba -n base -c conda-forge
 ```
 
 7. Create basic conda environment
+
+> ***Note**: If you want to install for other python version, please modify python=xxx and package(eg. ompl) version in basic_env.yaml to keep corresponding.*
+
 ```
 conda(mamba) env create -f basic_env.yaml
 conda(mamba) activate BestMan
