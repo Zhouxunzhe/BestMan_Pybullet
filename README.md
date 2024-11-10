@@ -48,6 +48,9 @@ A mobile manipulator (with a wheel-base and arm) platform built on PyBullet simu
 - [2024-11] We released version 0.2.0, optimizing modules such as Install and Robotics API.
 - [2024-10] We release the [paper](http://arxiv.org/abs/2410.13407) of BestMan.
 
+## Framework
+
+
 ## 🏠 Getting Started
 
 ### Prerequisites
@@ -86,7 +89,7 @@ If you want to enable **pybullet-blender-recorder**, please：
 
 <img width="1040" alt="image" src="https://github.com/user-attachments/assets/ab9e99c7-64c8-40fe-bbfe-edc0c786b812">
   
-2. Set `blender: Ture` in **Config/***.yaml**.
+2. Set `blender: Ture` in **Config/xxx.yaml**.
 
 3. After running the demo, a pkl file will be generated and saved in **Examples/record** dir
 
