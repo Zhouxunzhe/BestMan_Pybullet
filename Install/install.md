@@ -2,9 +2,9 @@
 
 ## Install with conda (Linux)
 
-### Basic Install
+### Basic Env
 
-> ***Note**: This will only install the basic module. For other algorithm submodules, please follow the instructions [Algorithm Submodule install](#algorithm-submodule-install) to install as needed.*
+> ***Note**: This will only install the basic module. For other algorithm submodules, please follow the instructions [Algorithm Submodule Env](#algorithm-submodule-env) to install as needed.*
 
 1. Pull the repository and update the submodule
 
@@ -48,21 +48,21 @@ gcc -v
 g++ -v
 ```
 
-6. Configure mamba to speed up the conda environment construction (Optional, skip if installation is slow or fails)
+6. Configure mamba to speed up the conda environment construction (**Optional**, skip if installation is slow or fails)
 ```
 conda install mamba -n base -c conda-forge
 ```
 
 7. Create basic conda environment
 
-> ***Note**: If you want to install for other python version, please modify python=xxx and package(eg. ompl) version in basic_env.yaml to keep corresponding.*
+> ***Note**: If you want to install for other python version, please change to basic_env_pyxxx.yaml.*
 
 ```
-conda(mamba) env create -f basic_env.yaml
+conda(mamba) env create -f basic_env_py38.yaml
 conda(mamba) activate BestMan
 ```
 
-### Algorithm Submodule install
+### Algorithm Submodule Env
 
 > ***Note**: In order to prevent conflicts in environment dependencies between different algorithm submodules in each module, we isolate the environments of each algorithm submodule of BestMan from each other for efficient management and calling.*
 
@@ -70,6 +70,8 @@ If you want to install and use centain submodule, please see `install.md` in sub
 
 - [Lang SAM](../Perception/Grasp_Pose_Estimation/AnyGrasp/install.md)
 - [AnyGrasp](../Perception/Grasp_Pose_Estimation/install.md)
+
+During the installation of these submodules, due to different GPU driver versions, the correspondence between torch, cuda and related library versions may need to be adjusted. It is recommended to refer to [here](https://pytorch.org/get-started/previous-versions/)
   
 
 ## Install with Docker (Windows)
