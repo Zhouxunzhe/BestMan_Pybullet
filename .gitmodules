@@ -21,3 +21,7 @@
 [submodule "acdc"]
 	path = DigitalTwin/acdc
 	url = https://github.com/starry521/digital-cousins.git
+
+[submodule "RoboTwin"]
+	path = DigitalTwin/RoboTwin
+	url = https://github.com/TianxingChen/RoboTwin.git
