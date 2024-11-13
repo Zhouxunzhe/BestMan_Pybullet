@@ -68,8 +68,8 @@ conda(mamba) activate BestMan
 
 If you want to install and use centain submodule, please see `install.md` in submodule dir. Such as:
 
-- [Lang SAM](../Perception/Grasp_Pose_Estimation/AnyGrasp/install.md)
-- [AnyGrasp](../Perception/Grasp_Pose_Estimation/install.md)
+- [Lang SAM](../Perception/Object_detection/Lang_SAM/install.md)
+- [AnyGrasp](../Perception/Grasp_Pose_Estimation/AnyGrasp/install.md)
 
 During the installation of these submodules, due to different GPU driver versions, the correspondence between torch, cuda and related library versions may need to be adjusted. It is recommended to refer to [here](https://pytorch.org/get-started/previous-versions/)
   
@@ -101,4 +101,4 @@ export DISPLAY=host.docker.internal:0
 
 ## Install with Docker (Linux)
 
-Coming in soon
+Coming soon
