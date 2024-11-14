@@ -50,15 +50,16 @@ class Client:
         else:
             self.client_id = p.connect(p.DIRECT)
 
-        if not cfg.enable_Debug:
-            p.configureDebugVisualizer(p.COV_ENABLE_GUI, 0)
-
-        if cfg.shadows:
-            p.configureDebugVisualizer(p.COV_ENABLE_SHADOWS, 1)  # enable shadows
-            p.configureDebugVisualizer(
-                p.COV_ENABLE_SEGMENTATION_MARK_PREVIEW, 0
-            )  # close segment mark preview
-            # p.configureDebugVisualizer(p.COV_ENABLE_PLANAR_REFLECTION, 1)   # enable planar reflection
+        if cfg.enable_Debug:
+             p.configureDebugVisualizer(1, lightPosition=(5, 0, 5), rgbBackground=(1,1,1))   # set light and background
+             if cfg.shadows:
+                p.configureDebugVisualizer(p.COV_ENABLE_SHADOWS, 1)  # enable shadows
+                p.configureDebugVisualizer(
+                    p.COV_ENABLE_SEGMENTATION_MARK_PREVIEW, 0
+                )  # close segment mark preview
+                # p.configureDebugVisualizer(p.COV_ENABLE_PLANAR_REFLECTION, 1)   # enable planar reflection
+        else:
+            p.configureDebugVisualizer(p.COV_ENABLE_GUI, 0) # enable GUI
 
         p.setAdditionalSearchPath(pybullet_data.getDataPath())
         p.setGravity(cfg.Gravity[0], cfg.Gravity[1], cfg.Gravity[2])
