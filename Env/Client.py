@@ -157,6 +157,7 @@ class Client:
         object_orientation=[0, 0, 0],
         scale=1,
         fixed_base=False,
+        external_texture=False
     ):
         """
         Load a given object into the PyBullet simulation environment.
@@ -173,13 +174,15 @@ class Client:
             int: The ID of the loaded object in the PyBullet simulation.
         """
 
-        if (
-            isinstance(object_orientation, (tuple, list, np.ndarray))
-            and len(object_orientation) == 3
-        ):
-            object_orientation = p.getQuaternionFromEuler(
-                object_orientation, physicsClientId=self.client_id
-            )
+        # if (
+        #     isinstance(object_orientation, (tuple, list, np.ndarray))
+        #     and len(object_orientation) == 3
+        # ):
+        #     object_orientation = p.getQuaternionFromEuler(
+        #         object_orientation, physicsClientId=self.client_id
+        #     )
+            
+        object_pose = Pose(object_position, object_orientation)
 
         if model_path.startswith("Asset"):
             model_path = os.path.join("..", model_path)
@@ -188,14 +191,23 @@ class Client:
 
         object_id = p.loadURDF(
             fileName=model_path,
-            basePosition=object_position,
-            baseOrientation=object_orientation,
+            basePosition=object_pose.get_position(),
+            baseOrientation=object_pose.get_orientation(),
             globalScaling=scale,
             useFixedBase=fixed_base,
             physicsClientId=self.client_id,
             flags=self.enable_cache,
         )
 
+        if external_texture:    # urdformer link texture not defined in urdf file
+            id = os.path.splitext(os.path.basename(model_path))[0]
+            tex_dir = os.path.join(os.path.dirname(os.path.dirname(model_path)), "texture", f"test{id}")
+            base_tex = os.path.join(tex_dir, "base.png")
+            self.load_link_texture(object_id, base_tex)     # load base link texture
+            for i in range(p.getNumJoints(object_id)):  # load other link texture
+                link_tex = os.path.join(tex_dir, f"{i}.png")
+                self.load_link_texture(object_id, link_tex, i)
+        
         if self.blender:
             self.register_object(object_id, model_path, scale)
 
@@ -477,6 +489,11 @@ class Client:
 
         return aabb_bounds
 
+    def load_link_texture(self, object_id, texture_file, link_id=-1):
+        if os.path.exists(texture_file):
+            tex = p.loadTexture(texture_file)
+            p.changeVisualShape(object_id, link_id, rgbaColor=(1, 1, 1, 1), textureUniqueId=tex)
+    
     # ----------------------------------------------------------------
     # For blender
     # ----------------------------------------------------------------
