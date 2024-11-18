@@ -29,15 +29,24 @@ def main():
 
     # Load scene
     scene_path = "Asset/Scene/Scene/Kitchen.json"
-    # scene_path = "Asset/Scene/Scene/kitchen_world/kitchen_lunch_tlp.lisdf"
+    scene_path = "Asset/Scene/Scene/kitchen_world/kitchen_lunch_tlp.lisdf"
 
     client.create_scene(scene_path)
 
+    # client.load_object(
+    #     "dishwashers",
+    #     "Asset/Scene/Object/assets/dishwashers/urdfs/2.urdf",
+    #     [0, 0, 0],
+    #     [0, 0, 0, 1],
+    #     fixed_base=True,
+    #     external_texture=True
+    # )
+    
     # client.wait(5)
     # visualizer.capture_screen("kitchen_1")
 
     # disconnect pybullet
-    client.wait(10)
+    client.wait(100)
     client.disconnect()
 
 

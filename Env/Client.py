@@ -50,9 +50,9 @@ class Client:
         else:
             self.client_id = p.connect(p.DIRECT)
 
+        p.configureDebugVisualizer(1, lightPosition=(5, 0, 5), rgbBackground=(1, 1, 1))   # set light and background
         if cfg.enable_Debug:
-             p.configureDebugVisualizer(1, lightPosition=(5, 0, 5), rgbBackground=(1,1,1))   # set light and background
-             if cfg.shadows:
+            if cfg.shadows:
                 p.configureDebugVisualizer(p.COV_ENABLE_SHADOWS, 1)  # enable shadows
                 p.configureDebugVisualizer(
                     p.COV_ENABLE_SEGMENTATION_MARK_PREVIEW, 0
@@ -173,14 +173,6 @@ class Client:
         Returns:
             int: The ID of the loaded object in the PyBullet simulation.
         """
-
-        # if (
-        #     isinstance(object_orientation, (tuple, list, np.ndarray))
-        #     and len(object_orientation) == 3
-        # ):
-        #     object_orientation = p.getQuaternionFromEuler(
-        #         object_orientation, physicsClientId=self.client_id
-        #     )
             
         object_pose = Pose(object_position, object_orientation)
 
@@ -196,17 +188,24 @@ class Client:
             globalScaling=scale,
             useFixedBase=fixed_base,
             physicsClientId=self.client_id,
-            flags=self.enable_cache,
+            flags=self.enable_cache
         )
 
+        def load_link_texture(object_id, texture_file, link_id=-1):
+            if os.path.exists(texture_file):
+                tex = p.loadTexture(texture_file)
+                p.changeVisualShape(object_id, link_id, rgbaColor=(1, 1, 1, 1), textureUniqueId=tex)
+        
         if external_texture:    # urdformer link texture not defined in urdf file
             id = os.path.splitext(os.path.basename(model_path))[0]
-            tex_dir = os.path.join(os.path.dirname(os.path.dirname(model_path)), "texture", f"test{id}")
+            tex_dir = os.path.join(os.path.dirname(os.path.dirname(model_path)), "textures", f"test{id}")
             base_tex = os.path.join(tex_dir, "base.png")
-            self.load_link_texture(object_id, base_tex)     # load base link texture
+            if os.path.exists(base_tex):
+                load_link_texture(object_id, base_tex)     # load base link texture
             for i in range(p.getNumJoints(object_id)):  # load other link texture
                 link_tex = os.path.join(tex_dir, f"{i}.png")
-                self.load_link_texture(object_id, link_tex, i)
+                if os.path.exists(link_tex):
+                    load_link_texture(object_id, link_tex, i)
         
         if self.blender:
             self.register_object(object_id, model_path, scale)
@@ -488,11 +487,6 @@ class Client:
         ]
 
         return aabb_bounds
-
-    def load_link_texture(self, object_id, texture_file, link_id=-1):
-        if os.path.exists(texture_file):
-            tex = p.loadTexture(texture_file)
-            p.changeVisualShape(object_id, link_id, rgbaColor=(1, 1, 1, 1), textureUniqueId=tex)
     
     # ----------------------------------------------------------------
     # For blender
