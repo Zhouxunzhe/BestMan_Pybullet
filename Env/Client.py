@@ -60,7 +60,7 @@ class Client:
                 # p.configureDebugVisualizer(p.COV_ENABLE_PLANAR_REFLECTION, 1)   # enable planar reflection
         else:
             p.configureDebugVisualizer(p.COV_ENABLE_GUI, 0) # enable GUI
-
+        
         p.setAdditionalSearchPath(pybullet_data.getDataPath())
         p.setGravity(cfg.Gravity[0], cfg.Gravity[1], cfg.Gravity[2])
         # p.setPhysicsEngineParameter(numSolverIterations=cfg.numSolverIterations)
@@ -181,34 +181,76 @@ class Client:
         else:
             model_path = os.path.join(self.pybullet_data, model_path)
 
-        object_id = p.loadURDF(
-            fileName=model_path,
-            basePosition=object_pose.get_position(),
-            baseOrientation=object_pose.get_orientation(),
-            globalScaling=scale,
-            useFixedBase=fixed_base,
-            physicsClientId=self.client_id,
-            flags=self.enable_cache
-        )
+        file_ext = os.path.splitext(model_path)[1]
+        if file_ext == '.urdf':
+            object_id = p.loadURDF(
+                fileName=model_path,
+                basePosition=object_pose.get_position(),
+                baseOrientation=object_pose.get_orientation(),
+                globalScaling=scale,
+                useFixedBase=fixed_base,
+                physicsClientId=self.client_id,
+                flags=self.enable_cache
+            )
 
-        def load_link_texture(object_id, texture_file, link_id=-1):
-            if os.path.exists(texture_file):
-                tex = p.loadTexture(texture_file)
-                p.changeVisualShape(object_id, link_id, rgbaColor=(1, 1, 1, 1), textureUniqueId=tex)
-        
-        if external_texture:    # urdformer link texture not defined in urdf file
-            id = os.path.splitext(os.path.basename(model_path))[0]
-            tex_dir = os.path.join(os.path.dirname(os.path.dirname(model_path)), "textures", f"test{id}")
-            base_tex = os.path.join(tex_dir, "base.png")
-            if os.path.exists(base_tex):
-                load_link_texture(object_id, base_tex)     # load base link texture
-            for i in range(p.getNumJoints(object_id)):  # load other link texture
-                link_tex = os.path.join(tex_dir, f"{i}.png")
-                if os.path.exists(link_tex):
-                    load_link_texture(object_id, link_tex, i)
-        
-        if self.blender:
-            self.register_object(object_id, model_path, scale)
+            def load_link_texture(object_id, texture_file, link_id=-1):
+                if os.path.exists(texture_file):
+                    tex = p.loadTexture(texture_file)
+                    p.changeVisualShape(object_id, link_id, rgbaColor=(1, 1, 1, 1), textureUniqueId=tex)
+            
+            if external_texture:    # urdformer link texture not defined in urdf file
+                id = os.path.splitext(os.path.basename(model_path))[0]
+                tex_dir = os.path.join(os.path.dirname(os.path.dirname(model_path)), "textures", f"test{id}")
+                base_tex = os.path.join(tex_dir, "base.png")
+                if os.path.exists(base_tex):
+                    load_link_texture(object_id, base_tex)     # load base link texture
+                for i in range(p.getNumJoints(object_id)):  # load other link texture
+                    link_tex = os.path.join(tex_dir, f"{i}.png")
+                    if os.path.exists(link_tex):
+                        load_link_texture(object_id, link_tex, i)
+            
+            if self.blender:
+                self.register_object(object_id, model_path, scale)
+                
+        elif file_ext in ['.obj', '.stl']:
+            # visual
+            visual_id = p.createVisualShape(
+                shapeType=p.GEOM_MESH,
+                fileName=model_path,
+                rgbaColor=[1, 1, 1, 1],
+                specularColor=[0.4, 0.4, 0],
+                # visualFramePosition=object_pose.get_position(),
+                meshScale=[scale]*3
+            )
+
+            # collision
+            collision_id = p.createCollisionShape(
+                shapeType=p.GEOM_MESH,
+                fileName=model_path,
+                meshScale=[scale]*3
+            )
+            
+            if fixed_base:
+                # load object from visual and collision
+                object_id = p.createMultiBody(
+                    baseVisualShapeIndex=visual_id,
+                    baseCollisionShapeIndex=collision_id,
+                    basePosition=object_pose.get_position(),
+                    baseOrientation=object_pose.get_orientation(),
+                    useMaximalCoordinates=True
+                )
+            else:
+               # load object from visual and collision
+                object_id = p.createMultiBody(
+                    baseMass=1,
+                    baseVisualShapeIndex=visual_id,
+                    baseCollisionShapeIndex=collision_id,
+                    basePosition=object_pose.get_position(),
+                    baseOrientation=object_pose.get_orientation(),
+                    useMaximalCoordinates=True
+                ) 
+        else:
+            raise Exception("[Client] \033[31merror\033[0m: Invalid object type!")
 
         setattr(self, obj_name, object_id)
 
