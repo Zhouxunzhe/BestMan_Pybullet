@@ -25,3 +25,7 @@
 [submodule "RoboTwin"]
 	path = DigitalTwin/RoboTwin
 	url = https://github.com/starry521/RoboTwin.git
+
+[submodule "pddlstream"]
+	path = Task_Planning/pddlstream
+	url = https://github.com/starry521/pddlstream.git
