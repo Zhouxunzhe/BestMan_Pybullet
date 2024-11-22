@@ -15,7 +15,7 @@ import os
 from Config import load_config
 from Env import Client
 from Motion_Planning.Navigation import *
-from Robotics_API import Bestman_sim_panda, Pose
+from Robotics_API import Bestman_sim_panda_with_gripper, Pose
 from Visualization import Visualizer
 
 
@@ -35,7 +35,7 @@ def main(filename):
     visualizer.start_record(filename)
 
     # Init robot
-    bestman = Bestman_sim_panda(client, visualizer, cfg)
+    bestman = Bestman_sim_panda_with_gripper(client, visualizer, cfg)
 
     # Load table and lego
     table_id = client.load_object(

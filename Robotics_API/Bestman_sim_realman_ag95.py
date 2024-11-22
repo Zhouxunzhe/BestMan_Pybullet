@@ -54,7 +54,6 @@ class Bestman_sim_realman_ag95(Bestman_sim):
             [[0, 0, 1], [0, 1, 0], [-1, 0, 0]]
         )
         arm_pose = Pose(arm_position, arm_rotate_matrix)
-        print(arm_pose.get_position())
         return arm_pose
 
     # ----------------------------------------------------------------

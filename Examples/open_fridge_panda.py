@@ -17,7 +17,7 @@ import pybullet as p
 
 from Config import load_config
 from Env import Client
-from Robotics_API import Bestman_sim_panda, Pose
+from Robotics_API import Bestman_sim_panda_with_gripper, Pose
 from Visualization import Visualizer
 
 
@@ -86,7 +86,7 @@ def main(filename):
     visualizer.start_record(filename)
 
     # Init robot
-    panda = Bestman_sim_panda(client, visualizer, cfg)
+    panda = Bestman_sim_panda_with_gripper(client, visualizer, cfg)
     panda.sim_open_gripper()
 
     client.load_object(
